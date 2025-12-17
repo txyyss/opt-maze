@@ -1,0 +1,10 @@
+name = "opt-maze"
+version = "0.1.0"
+defaultTargets = ["opt-maze"]
+
+[[lean_lib]]
+name = "OptMaze"
+
+[[lean_exe]]
+name = "opt-maze"
+root = "Main"
