@@ -14,9 +14,29 @@ def get? (m : BitMatrix) (r c : Nat) : Option Bool := do
   let row ← m.rows[r]?
   row[c]?
 
+/-- A matrix is *well-shaped* if it has exactly `height` rows, `height > 0`, `width > 0`, and every row has length `width`. -/
+def wellShaped (m : BitMatrix) : Prop :=
+  m.rows.size = m.height ∧ m.height > 0 ∧ m.width > 0 ∧
+    (∀ r (hr : r < m.rows.size), (m.rows[r]'hr).size = m.width)
+
 end BitMatrix
 
-private def parse01Line (line : String) : Except String (Array Bool) := do
+/-- Render the matrix back to the original 0/1 text layout. -/
+def BitMatrix.to01String (m : BitMatrix) : String :=
+  let rowToString (row : Array Bool) : String :=
+    Id.run <| do
+      let mut s := ""
+      for b in row do
+        s := s.push (if b then '1' else '0')
+      s
+  let rows : List String :=
+    (List.range m.rows.size).map fun r =>
+      match m.rows[r]? with
+      | some row => rowToString row
+      | none => ""
+  String.intercalate "\n" rows
+
+def parse01Line (line : String) : Except String (Array Bool) := do
   let mut row : Array Bool := #[]
   for ch in line.toList do
     if ch == '0' then
