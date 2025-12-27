@@ -38,6 +38,16 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
         | _ => pure ()
     -- adjacency and boundary/path blocking constraints
     for (r, c, name) in tiles do
+      let isLeft := c = 0
+      let isRight := c + 1 = m.width
+      let isTop := r = 0
+      let isBottom := r + 1 = m.height
+      -- boundary type restrictions
+      if isLeft || isRight then
+        lines := lines.push s!"(assert (= {name} 6))" -- horizontal only
+      else if isTop || isBottom then
+        lines := lines.push s!"(assert (= {name} 5))" -- vertical only
+      -- adjacency constraints with boundary relaxation
       -- right neighbor
       if c + 1 < m.width then
         match m.get? r (c+1) with
@@ -46,7 +56,7 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert (= (hasRight {name}) (hasLeft {n})))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasRight" name})"
-      else
+      else if !isRight then
         lines := lines.push s!"(assert {dirFalse "hasRight" name})"
       -- left neighbor
       if c > 0 then
@@ -56,7 +66,7 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert (= (hasLeft {name}) (hasRight {n})))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasLeft" name})"
-      else
+      else if !isLeft then
         lines := lines.push s!"(assert {dirFalse "hasLeft" name})"
       -- down neighbor
       if r + 1 < m.height then
@@ -66,7 +76,7 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert (= (hasDown {name}) (hasUp {n})))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasDown" name})"
-      else
+      else if !isBottom then
         lines := lines.push s!"(assert {dirFalse "hasDown" name})"
       -- up neighbor
       if r > 0 then
@@ -76,7 +86,7 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert (= (hasUp {name}) (hasDown {n})))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasUp" name})"
-      else
+      else if !isTop then
         lines := lines.push s!"(assert {dirFalse "hasUp" name})"
     -- objective: maximize number of non-white tiles
     let objective :=

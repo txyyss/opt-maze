@@ -1,1 +1,4 @@
 /.lake
+*.smt2
+*.out
+*.sol
