@@ -33,7 +33,7 @@ private def declareTiles (m : BitMatrix) (lines : Array String) :
           let name := s!"tile_{r}_{c}"
           lines := lines.push s!"(declare-const {name} Int)"
           lines := lines.push s!"(assert (inRange {name}))"
-          lines := lines.push s!"(assert (not (= {name} 7)))" -- forbid cross tile
+          -- lines := lines.push s!"(assert (not (= {name} 7)))" -- forbid cross tile
           tiles := tiles.push (r, c, name)
       | _ => pure ()
   return (lines, tiles)
