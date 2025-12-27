@@ -22,22 +22,26 @@ private def dirConstr (dirName : String) (tileName : String) : String :=
 private def dirFalse (dirName : String) (tileName : String) : String :=
   s!"(not ({dirName} {tileName}))"
 
-/-- Build SMT-LIB text for a given `BitMatrix`. Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). -/
-def bitMatrixToSmt2 (m : BitMatrix) : String :=
+private def declareTiles (m : BitMatrix) (lines : Array String) :
+    Id (Array String × Array (Nat × Nat × String)) := do
+  let mut lines := lines
+  let mut tiles : Array (Nat × Nat × String) := #[]
+  for r in List.range m.height do
+    for c in List.range m.width do
+      match m.get? r c with
+      | some false =>
+          let name := s!"tile_{r}_{c}"
+          lines := lines.push s!"(declare-const {name} Int)"
+          lines := lines.push s!"(assert (inRange {name}))"
+          lines := lines.push s!"(assert (not (= {name} 7)))" -- forbid cross tile
+          tiles := tiles.push (r, c, name)
+      | _ => pure ()
+  return (lines, tiles)
+
+private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
+    (tiles : Array (Nat × Nat × String)) : Array String :=
   Id.run do
-    let mut lines : Array String := smtPrelude
-    let mut tiles : Array (Nat × Nat × String) := #[]
-    -- declare variables for cells we need to cover (false cells)
-    for r in List.range m.height do
-      for c in List.range m.width do
-        match m.get? r c with
-        | some false =>
-            let name := s!"tile_{r}_{c}"
-            lines := lines.push s!"(declare-const {name} Int)"
-            lines := lines.push s!"(assert (inRange {name}))"
-            tiles := tiles.push (r, c, name)
-        | _ => pure ()
-    -- adjacency and boundary/path blocking constraints
+    let mut lines := lines
     for (r, c, name) in tiles do
       let isLeft := c = 0
       let isRight := c + 1 = m.width
@@ -89,7 +93,12 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert {dirFalse "hasUp" name})"
       else if !isTop then
         lines := lines.push s!"(assert {dirFalse "hasUp" name})"
-    -- connectivity: assign ranks to ensure all non-white tiles form one component
+    return lines
+
+private def addConnectivity (m : BitMatrix) (lines : Array String)
+    (tiles : Array (Nat × Nat × String)) : Array String :=
+  Id.run do
+    let mut lines := lines
     if tiles.size > 0 then
       let isBoundary (r c : Nat) : Bool :=
         r = 0 || c = 0 || r + 1 = m.height || c + 1 = m.width
@@ -114,7 +123,7 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
           lines := lines.push s!"(assert (=> {active} (= {rankName} 0)))"
         else
           lines := lines.push s!"(assert (=> {active} (and (>= {rankName} 1) (<= {rankName} {maxRank}))))"
-      -- parent-choice connectivity: each non-root active tile picks a connected neighbor with smaller rank
+      -- parent-choice connectivity
       for (r, c, name) in tiles do
         let rankName := s!"rank_{r}_{c}"
         let active := s!"(= (nonWhite {name}) 1)"
@@ -169,6 +178,15 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
               lines := lines.push s!"(assert (not {pU}))"
         else
           lines := lines.push s!"(assert (not {pU}))"
+    return lines
+
+/-- Build SMT-LIB text for a given `BitMatrix`. Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). -/
+def bitMatrixToSmt2 (m : BitMatrix) : String :=
+  Id.run do
+    let (lines0, tiles) := declareTiles m smtPrelude
+    let lines1 := addAdjacencyAndBoundary m lines0 tiles
+    let lines2 := addConnectivity m lines1 tiles
+    let mut lines := lines2
     -- objective: maximize number of non-white tiles
     let objective :=
       if tiles.isEmpty then "(maximize 0)"
