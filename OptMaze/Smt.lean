@@ -3,6 +3,7 @@ import OptMaze.BitMatrix
 namespace OptMaze
 
 open BitMatrix
+open Std
 
 /-- SMT helpers for tile directions. -/
 def smtPrelude : Array String := #[
@@ -88,6 +89,86 @@ def bitMatrixToSmt2 (m : BitMatrix) : String :=
             lines := lines.push s!"(assert {dirFalse "hasUp" name})"
       else if !isTop then
         lines := lines.push s!"(assert {dirFalse "hasUp" name})"
+    -- connectivity: assign ranks to ensure all non-white tiles form one component
+    if tiles.size > 0 then
+      let isBoundary (r c : Nat) : Bool :=
+        r = 0 || c = 0 || r + 1 = m.height || c + 1 = m.width
+      let root :=
+        match tiles.find? (fun (r, c, _) => isBoundary r c) with
+        | some v => v
+        | none =>
+            match tiles.toList.head? with
+            | some v => v
+            | none => unreachable!
+      let maxRank := tiles.size
+      let findTile (rr cc : Nat) : Option String :=
+        match tiles.find? (fun (r, c, _) => r = rr ∧ c = cc) with
+        | some (_, _, nm) => some nm
+        | none => none
+      -- declare ranks for all tiles first
+      for (r, c, name) in tiles do
+        let rankName := s!"rank_{r}_{c}"
+        let active := s!"(= (nonWhite {name}) 1)"
+        lines := lines.push s!"(declare-const {rankName} Int)"
+        if (r, c, name) = root then
+          lines := lines.push s!"(assert (=> {active} (= {rankName} 0)))"
+        else
+          lines := lines.push s!"(assert (=> {active} (and (>= {rankName} 1) (<= {rankName} {maxRank}))))"
+      -- parent-choice connectivity: each non-root active tile picks a connected neighbor with smaller rank
+      for (r, c, name) in tiles do
+        let rankName := s!"rank_{r}_{c}"
+        let active := s!"(= (nonWhite {name}) 1)"
+        let isRoot := (r, c, name) = root
+        let pR := s!"pR_{r}_{c}"
+        let pL := s!"pL_{r}_{c}"
+        let pD := s!"pD_{r}_{c}"
+        let pU := s!"pU_{r}_{c}"
+        lines := lines.push s!"(declare-const {pR} Bool)"
+        lines := lines.push s!"(declare-const {pL} Bool)"
+        lines := lines.push s!"(declare-const {pD} Bool)"
+        lines := lines.push s!"(declare-const {pU} Bool)"
+        if isRoot then
+          lines := lines.push s!"(assert (not {pR}))"
+          lines := lines.push s!"(assert (not {pL}))"
+          lines := lines.push s!"(assert (not {pD}))"
+          lines := lines.push s!"(assert (not {pU}))"
+        else
+          lines := lines.push s!"(assert (=> {active} (or {pR} {pL} {pD} {pU})))"
+        -- directional parent constraints
+        match findTile r (c+1) with
+        | some nname =>
+            let nRank := s!"rank_{r}_{c+1}"
+            let nActive := s!"(= (nonWhite {nname}) 1)"
+            lines := lines.push s!"(assert (=> {pR} (and {active} {nActive} (hasRight {name}) (hasLeft {nname}) (< {nRank} {rankName}))))"
+        | none =>
+            lines := lines.push s!"(assert (not {pR}))"
+        if c > 0 then
+          match findTile r (c-1) with
+          | some nname =>
+              let nRank := s!"rank_{r}_{c-1}"
+              let nActive := s!"(= (nonWhite {nname}) 1)"
+              lines := lines.push s!"(assert (=> {pL} (and {active} {nActive} (hasLeft {name}) (hasRight {nname}) (< {nRank} {rankName}))))"
+          | none =>
+              lines := lines.push s!"(assert (not {pL}))"
+        else
+          lines := lines.push s!"(assert (not {pL}))"
+        match findTile (r+1) c with
+        | some nname =>
+            let nRank := s!"rank_{r+1}_{c}"
+            let nActive := s!"(= (nonWhite {nname}) 1)"
+            lines := lines.push s!"(assert (=> {pD} (and {active} {nActive} (hasDown {name}) (hasUp {nname}) (< {nRank} {rankName}))))"
+        | none =>
+            lines := lines.push s!"(assert (not {pD}))"
+        if r > 0 then
+          match findTile (r-1) c with
+          | some nname =>
+              let nRank := s!"rank_{r-1}_{c}"
+              let nActive := s!"(= (nonWhite {nname}) 1)"
+              lines := lines.push s!"(assert (=> {pU} (and {active} {nActive} (hasUp {name}) (hasDown {nname}) (< {nRank} {rankName}))))"
+          | none =>
+              lines := lines.push s!"(assert (not {pU}))"
+        else
+          lines := lines.push s!"(assert (not {pU}))"
     -- objective: maximize number of non-white tiles
     let objective :=
       if tiles.isEmpty then "(maximize 0)"
