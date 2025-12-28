@@ -5,6 +5,19 @@ namespace OptMaze
 open BitMatrix
 open Std
 
+/-- Virtual node used for connectivity encoding (may split a cross into two nodes). -/
+structure VirtNode where
+  row : Nat
+  col : Nat
+  name : String
+  kind : String
+  active : String
+  up : String
+  right : String
+  down : String
+  left : String
+  deriving DecidableEq, Inhabited
+
 /-- SMT helpers for tile directions. -/
 def smtPrelude : Array String := #[
   "(set-logic QF_LIA)",
@@ -23,9 +36,10 @@ private def dirFalse (dirName : String) (tileName : String) : String :=
   s!"(not ({dirName} {tileName}))"
 
 private def declareTiles (m : BitMatrix) (lines : Array String) :
-    Id (Array String × Array (Nat × Nat × String)) := do
+    Id (Array String × Array (Nat × Nat × String) × Array VirtNode) := do
   let mut lines := lines
   let mut tiles : Array (Nat × Nat × String) := #[]
+  let mut nodes : Array VirtNode := #[]
   for r in List.range m.height do
     for c in List.range m.width do
       match m.get? r c with
@@ -33,10 +47,29 @@ private def declareTiles (m : BitMatrix) (lines : Array String) :
           let name := s!"tile_{r}_{c}"
           lines := lines.push s!"(declare-const {name} Int)"
           lines := lines.push s!"(assert (inRange {name}))"
-          -- lines := lines.push s!"(assert (not (= {name} 7)))" -- forbid cross tile
           tiles := tiles.push (r, c, name)
+          let baseActive := s!"(and (not (= {name} 7)) (= (nonWhite {name}) 1))"
+          nodes := nodes.push {
+            row := r, col := c, name := s!"node_{r}_{c}", kind := "base",
+            active := baseActive,
+            up := s!"(hasUp {name})", right := s!"(hasRight {name})",
+            down := s!"(hasDown {name})", left := s!"(hasLeft {name})"
+          }
+          let crossActive := s!"(= {name} 7)"
+          nodes := nodes.push {
+            row := r, col := c, name := s!"nodeH_{r}_{c}", kind := "h",
+            active := crossActive,
+            up := "false", down := "false",
+            left := s!"(hasLeft {name})", right := s!"(hasRight {name})"
+          }
+          nodes := nodes.push {
+            row := r, col := c, name := s!"nodeV_{r}_{c}", kind := "v",
+            active := crossActive,
+            up := s!"(hasUp {name})", down := s!"(hasDown {name})",
+            left := "false", right := "false"
+          }
       | _ => pure ()
-  return (lines, tiles)
+  return (lines, tiles, nodes)
 
 private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
     (tiles : Array (Nat × Nat × String)) : Array String :=
@@ -95,43 +128,55 @@ private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
         lines := lines.push s!"(assert {dirFalse "hasUp" name})"
     return lines
 
+private def neighborCandidates (nodes : Array VirtNode) (r c : Nat) (dir : String) : Array VirtNode :=
+  let candidates := nodes.filter (fun n => n.row = r && n.col = c && (
+    match dir with
+    | "R" => n.left ≠ "false"
+    | "L" => n.right ≠ "false"
+    | "U" => n.down ≠ "false"
+    | "D" => n.up ≠ "false"
+    | _ => False))
+  let preferKind := match dir with
+    | "R" | "L" => "h"
+    | "U" | "D" => "v"
+    | _ => "base"
+  -- keep preferred kind first to preserve previous bias
+  let (pref, rest) := candidates.partition (fun n => n.kind = preferKind)
+  pref ++ rest
+
 private def addConnectivity (m : BitMatrix) (lines : Array String)
-    (tiles : Array (Nat × Nat × String)) : Array String :=
+    (nodes : Array VirtNode) : Array String :=
   Id.run do
     let mut lines := lines
-    if tiles.size > 0 then
+    if nodes.size > 0 then
       let isBoundary (r c : Nat) : Bool :=
         r = 0 || c = 0 || r + 1 = m.height || c + 1 = m.width
-      let root :=
-        match tiles.find? (fun (r, c, _) => isBoundary r c) with
-        | some v => v
+      let (rootR, rootC) :=
+        match nodes.find? (fun n => isBoundary n.row n.col) with
+        | some v => (v.row, v.col)
         | none =>
-            match tiles.toList.head? with
-            | some v => v
+            match nodes.toList.head? with
+            | some v => (v.row, v.col)
             | none => unreachable!
-      let maxRank := tiles.size
-      let findTile (rr cc : Nat) : Option String :=
-        match tiles.find? (fun (r, c, _) => r = rr ∧ c = cc) with
-        | some (_, _, nm) => some nm
-        | none => none
+      let maxRank := nodes.size
       -- declare ranks for all tiles first
-      for (r, c, name) in tiles do
-        let rankName := s!"rank_{r}_{c}"
-        let active := s!"(= (nonWhite {name}) 1)"
+      for n in nodes do
+        let rankName := s!"rank_{n.row}_{n.col}_{n.kind}"
+        let active := n.active
         lines := lines.push s!"(declare-const {rankName} Int)"
-        if (r, c, name) = root then
+        if n.row = rootR ∧ n.col = rootC then
           lines := lines.push s!"(assert (=> {active} (= {rankName} 0)))"
         else
           lines := lines.push s!"(assert (=> {active} (and (>= {rankName} 1) (<= {rankName} {maxRank}))))"
       -- parent-choice connectivity
-      for (r, c, name) in tiles do
-        let rankName := s!"rank_{r}_{c}"
-        let active := s!"(= (nonWhite {name}) 1)"
-        let isRoot := (r, c, name) = root
-        let pR := s!"pR_{r}_{c}"
-        let pL := s!"pL_{r}_{c}"
-        let pD := s!"pD_{r}_{c}"
-        let pU := s!"pU_{r}_{c}"
+      for n in nodes do
+        let rankName := s!"rank_{n.row}_{n.col}_{n.kind}"
+        let active := n.active
+        let isRoot := n.row = rootR ∧ n.col = rootC
+        let pR := s!"pR_{n.row}_{n.col}_{n.kind}"
+        let pL := s!"pL_{n.row}_{n.col}_{n.kind}"
+        let pD := s!"pD_{n.row}_{n.col}_{n.kind}"
+        let pU := s!"pU_{n.row}_{n.col}_{n.kind}"
         lines := lines.push s!"(declare-const {pR} Bool)"
         lines := lines.push s!"(declare-const {pL} Bool)"
         lines := lines.push s!"(declare-const {pD} Bool)"
@@ -144,38 +189,62 @@ private def addConnectivity (m : BitMatrix) (lines : Array String)
         else
           lines := lines.push s!"(assert (=> {active} (or {pR} {pL} {pD} {pU})))"
         -- directional parent constraints
-        match findTile r (c+1) with
-        | some nname =>
-            let nRank := s!"rank_{r}_{c+1}"
-            let nActive := s!"(= (nonWhite {nname}) 1)"
-            lines := lines.push s!"(assert (=> {pR} (and {active} {nActive} (hasRight {name}) (hasLeft {nname}) (< {nRank} {rankName}))))"
-        | none =>
+        if n.right = "false" then
+          lines := lines.push s!"(assert (not {pR}))"
+        else
+          let cands := neighborCandidates nodes n.row (n.col+1) "R"
+          if cands.isEmpty then
             lines := lines.push s!"(assert (not {pR}))"
-        if c > 0 then
-          match findTile r (c-1) with
-          | some nname =>
-              let nRank := s!"rank_{r}_{c-1}"
-              let nActive := s!"(= (nonWhite {nname}) 1)"
-              lines := lines.push s!"(assert (=> {pL} (and {active} {nActive} (hasLeft {name}) (hasRight {nname}) (< {nRank} {rankName}))))"
-          | none =>
-              lines := lines.push s!"(assert (not {pL}))"
+          else
+            let pieces := cands.map (fun nn =>
+              let nRank := s!"rank_{nn.row}_{nn.col}_{nn.kind}"
+              let nActive := nn.active
+              s!"(and {active} {nActive} {n.right} {nn.left} (< {nRank} {rankName}))")
+            let disj := String.intercalate " " pieces.toList
+            lines := lines.push s!"(assert (=> {pR} (or {disj})))"
+        if n.col > 0 then
+          if n.left = "false" then
+            lines := lines.push s!"(assert (not {pL}))"
         else
           lines := lines.push s!"(assert (not {pL}))"
-        match findTile (r+1) c with
-        | some nname =>
-            let nRank := s!"rank_{r+1}_{c}"
-            let nActive := s!"(= (nonWhite {nname}) 1)"
-            lines := lines.push s!"(assert (=> {pD} (and {active} {nActive} (hasDown {name}) (hasUp {nname}) (< {nRank} {rankName}))))"
-        | none =>
+        if n.col > 0 then
+          let cands := neighborCandidates nodes n.row (n.col-1) "L"
+          if cands.isEmpty then
+            lines := lines.push s!"(assert (not {pL}))"
+          else
+            let pieces := cands.map (fun nn =>
+              let nRank := s!"rank_{nn.row}_{nn.col}_{nn.kind}"
+              let nActive := nn.active
+              s!"(and {active} {nActive} {n.left} {nn.right} (< {nRank} {rankName}))")
+            let disj := String.intercalate " " pieces.toList
+            lines := lines.push s!"(assert (=> {pL} (or {disj})))"
+        if n.down = "false" then
             lines := lines.push s!"(assert (not {pD}))"
-        if r > 0 then
-          match findTile (r-1) c with
-          | some nname =>
-              let nRank := s!"rank_{r-1}_{c}"
-              let nActive := s!"(= (nonWhite {nname}) 1)"
-              lines := lines.push s!"(assert (=> {pU} (and {active} {nActive} (hasUp {name}) (hasDown {nname}) (< {nRank} {rankName}))))"
-          | none =>
+        else
+          let cands := neighborCandidates nodes (n.row+1) n.col "D"
+          if cands.isEmpty then
+            lines := lines.push s!"(assert (not {pD}))"
+          else
+            let pieces := cands.map (fun nn =>
+              let nRank := s!"rank_{nn.row}_{nn.col}_{nn.kind}"
+              let nActive := nn.active
+              s!"(and {active} {nActive} {n.down} {nn.up} (< {nRank} {rankName}))")
+            let disj := String.intercalate " " pieces.toList
+            lines := lines.push s!"(assert (=> {pD} (or {disj})))"
+        if n.row > 0 then
+          if n.up = "false" then
+            lines := lines.push s!"(assert (not {pU}))"
+          else
+            let cands := neighborCandidates nodes (n.row-1) n.col "U"
+            if cands.isEmpty then
               lines := lines.push s!"(assert (not {pU}))"
+            else
+              let pieces := cands.map (fun nn =>
+                let nRank := s!"rank_{nn.row}_{nn.col}_{nn.kind}"
+                let nActive := nn.active
+                s!"(and {active} {nActive} {n.up} {nn.down} (< {nRank} {rankName}))")
+              let disj := String.intercalate " " pieces.toList
+              lines := lines.push s!"(assert (=> {pU} (or {disj})))"
         else
           lines := lines.push s!"(assert (not {pU}))"
     return lines
@@ -183,9 +252,9 @@ private def addConnectivity (m : BitMatrix) (lines : Array String)
 /-- Build SMT-LIB text for a given `BitMatrix`. Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). -/
 def bitMatrixToSmt2 (m : BitMatrix) : String :=
   Id.run do
-    let (lines0, tiles) := declareTiles m smtPrelude
+    let (lines0, tiles, nodes) := declareTiles m smtPrelude
     let lines1 := addAdjacencyAndBoundary m lines0 tiles
-    let lines2 := addConnectivity m lines1 tiles
+    let lines2 := addConnectivity m lines1 nodes
     let mut lines := lines2
     -- objective: maximize number of non-white tiles
     let objective :=
