@@ -331,36 +331,40 @@ private def parseModelLine (line : String) : Option (String × Option String) :=
     | _ :: name :: _ => some (name, none)
     | _ => none
 
+private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssignment)
+    : Except String (Array TileAssignment) :=
+  match fuel, ls with
+  | _, [] => .ok acc
+  | 0, _ :: _ => throw "parseSmtSolution: fuel exhausted"
+  | fuel+1, ln :: rest =>
+      match parseModelLine ln.trim with
+      | none => parseSmtLines fuel rest acc
+      | some (name, valInline?) =>
+          let tryParse (valStr : String) (restTail : List String) :=
+            match valStr.toInt? with
+            | none => throw s!"Failed to parse value for {name} from '{valStr}'."
+            | some v =>
+                match parseTileName name with
+                | some (r, c) =>
+                    parseSmtLines fuel restTail (acc.push { row := r, col := c, value := v })
+                | none =>
+                    throw s!"Bad tile name '{name}'."
+          match valInline? with
+          | some v => tryParse v rest
+          | none =>
+              match rest with
+              | valLn :: restTail =>
+                  let valStr := dropParensRight valLn.trim
+                  tryParse valStr restTail
+              | [] =>
+                  throw s!"Missing value line for {name}."
+
 /-- Parse all tile assignments from an SMT solver output string. Handles multi-line
     `(define-fun …)` blocks where the value appears on the next line, and single-line
     definitions. Non-matching lines are ignored. -/
-partial def parseSmtSolution (contents : String) : Except String (Array TileAssignment) := do
+def parseSmtSolution (contents : String) : Except String (Array TileAssignment) := do
   let lines := contents.splitOn "\n"
-  let rec go : List String → Array TileAssignment → Except String (Array TileAssignment)
-    | [], acc => .ok acc
-    | ln :: rest, acc =>
-        match parseModelLine ln.trim with
-        | none => go rest acc
-        | some (name, valInline?) =>
-            let tryParse (valStr : String) (restTail : List String) :=
-              match valStr.toInt? with
-              | none => throw s!"Failed to parse value for {name} from '{valStr}'."
-              | some v =>
-                  match parseTileName name with
-                  | some (r, c) =>
-                      go restTail (acc.push { row := r, col := c, value := v })
-                  | none =>
-                      throw s!"Bad tile name '{name}'."
-            match valInline? with
-            | some v => tryParse v rest
-            | none =>
-                match rest with
-                | valLn :: restTail =>
-                    let valStr := dropParensRight valLn.trim
-                    tryParse valStr restTail
-                | [] =>
-                    throw s!"Missing value line for {name}."
-  go lines #[]
+  parseSmtLines (lines.length.succ) lines #[]
 
 /-- Read a solver output file and parse it into tile assignments. -/
 def readSmtSolution (path : System.FilePath) : IO (Array TileAssignment) := do
