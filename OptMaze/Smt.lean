@@ -266,7 +266,7 @@ private def addConnectivity (m : BitMatrix) (lines : Array String)
     return lines
 
 /-- Build SMT-LIB text for a given `BitMatrix`. `minNonWhite? = none` emits a `maximize` objective; `some k` emits a hard constraint `(#nonWhite >= k)` (for solvers without optimization). Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). -/
-def bitMatrixToSmt2WithBound (m : BitMatrix) (minNonWhite? : Option Nat := none) : String :=
+def bitMatrixSmt2 (m : BitMatrix) (minNonWhite? : Option Nat := none) : String :=
   Id.run do
     let (lines0, tiles, nodes) := declareTiles m smtPrelude
     let lines1 := addAdjacencyAndBoundary m lines0 tiles
@@ -286,10 +286,6 @@ def bitMatrixToSmt2WithBound (m : BitMatrix) (minNonWhite? : Option Nat := none)
     lines := lines.push "(check-sat)"
     lines := lines.push "(get-model)"
     String.intercalate "\n" lines.toList
-
-/-- Default entry point: maximize number of non-white tiles. -/
-def bitMatrixToSmt2 (m : BitMatrix) : String :=
-  bitMatrixToSmt2WithBound m (some 3)
 
 /-- A single tile assignment decoded from an SMT solver model. -/
 structure TileAssignment where

@@ -2,23 +2,43 @@ import OptMaze
 import OptMaze.BitMatrix
 import OptMaze.Smt
 
-/-- Full pipeline: read 01 matrix, emit SMT2, call z3, write solution, emit Mathematica list. -/
+/-- Full pipeline: read 01 matrix, emit SMT2, call solver, write solution, emit Mathematica list.
+    CLI:
+    - `lake exe opt-maze <input>`                   -- default solver `z3`, maximize objective
+    - `lake exe opt-maze <input> <solver>`          -- use given solver, maximize objective
+    - `lake exe opt-maze <input> <min>`             -- default solver `z3`, assert non-white ≥ min
+    - `lake exe opt-maze <input> <solver> <min>`    -- use given solver with lower bound
+    If `min` is not a natural number, the argument is treated as solver. -/
 def main (args : List String) : IO Unit := do
   match args with
-  | inputStr :: z3Path? =>
+  | inputStr :: rest =>
       let input : System.FilePath := ⟨inputStr⟩
       let smtPath := input.withExtension "smt2"
       let solPath := input.withExtension "sol"
       let outPath := input.withExtension "out"
+      -- interpret optional solver / bound arguments
+      let (solver, minBound?) ←
+        match rest with
+        | [] => pure ("z3", (none : Option Nat))
+        | [a] =>
+            match a.toNat? with
+            | some n => pure ("z3", some n)
+            | none => pure (a, none)
+        | [a, b] =>
+            match b.toNat? with
+            | some n => pure (a, some n)
+            | none => throw <| IO.userError s!"Cannot parse bound '{b}' as a Nat."
+        | _ =>
+            throw <| IO.userError "Too many arguments. Usage: lake exe opt-maze <input> [solver] [min]"
       -- 1) parse input and emit SMT2
       let m ← readBitMatrix input
       let falseCount := OptMaze.countFalseCells m
       IO.println s!"black cells: {falseCount}"
-      let smt := OptMaze.bitMatrixToSmt2 m
+      let smt := OptMaze.bitMatrixSmt2 m minBound?
       IO.FS.writeFile smtPath smt
       IO.println s!"SMT2 written to {smtPath}"
       -- 2) call z3 synchronously, capture stdout
-      let z3Cmd := z3Path?.headD "z3"
+      let z3Cmd := solver
       let tStart ← IO.monoMsNow
       let z3Out ← IO.Process.run { cmd := z3Cmd, args := #[smtPath.toString] }
       let tEnd ← IO.monoMsNow
