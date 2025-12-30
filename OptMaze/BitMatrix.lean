@@ -54,7 +54,7 @@ def parseBitMatrix (contents : String) : Except String BitMatrix := do
   let mut rows : Array (Array Bool) := #[]
   let mut width? : Option Nat := none
   for raw in contents.splitOn "\n" do
-    if raw.trim.isEmpty then
+    if raw.trimAscii.isEmpty then
       pure ()
     else
       match parse01Line raw with

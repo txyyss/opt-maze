@@ -306,17 +306,23 @@ private def parseTileName (name : String) : Option (Nat × Nat) := do
       let r? := r.toNat?
       let c? := c.toNat?
       match r?, c? with
-      | some r', some c' => some (r', c')
+      | (some r'), (some c') => some (r', c')
       | _, _ => none
   | _ => none
 
+/-- Trim trailing ')' or '\r' characters from the right. -/
 private def dropParensRight (s : String) : String :=
-  s.dropRightWhile fun ch => ch = ')' || ch = '\r'
+  let trimmed := s.toList.reverse.dropWhile (fun ch => ch = ')' || ch = '\r')
+  String.ofList trimmed.reverse
+
+/-- ASCII trim that returns a String (not a slice). -/
+private def trimAsciiStr (s : String) : String :=
+  s.trimAscii.toString
 
 /-- Parse a single line of Z3 model output. Supports the usual
     `(define-fun tile_r_c () Int v)` shape. Non-matching lines return `none`. -/
 private def parseModelLine (line : String) : Option (String × Option String) := do
-  let t := line.trim
+  let t := trimAsciiStr line
   if !t.startsWith "(define-fun tile_" then
     none
   else
@@ -327,7 +333,7 @@ private def parseModelLine (line : String) : Option (String × Option String) :=
           some (name, none)
         else
           let raw := String.intercalate " " valParts
-          let valStr := dropParensRight raw.trim
+          let valStr := dropParensRight (trimAsciiStr raw)
           some (name, some valStr)
     | _ :: name :: _ => some (name, none)
     | _ => none
@@ -338,7 +344,7 @@ private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssig
   | _, [] => .ok acc
   | 0, _ :: _ => throw "parseSmtSolution: fuel exhausted"
   | fuel+1, ln :: rest =>
-      match parseModelLine ln.trim with
+      match parseModelLine (trimAsciiStr ln) with
       | none => parseSmtLines fuel rest acc
       | some (name, valInline?) =>
           let tryParse (valStr : String) (restTail : List String) :=
@@ -355,7 +361,7 @@ private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssig
           | none =>
               match rest with
               | valLn :: restTail =>
-                  let valStr := dropParensRight valLn.trim
+                  let valStr := dropParensRight (trimAsciiStr valLn)
                   tryParse valStr restTail
               | [] =>
                   throw s!"Missing value line for {name}."
@@ -365,11 +371,11 @@ private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssig
     definitions. Non-matching lines are ignored. -/
 def parseSmtResult (contents : String) : Except String SmtResult := do
   let lines := contents.splitOn "\n"
-  let nonEmpty := lines.dropWhile (fun ln => ln.trim.isEmpty)
+  let nonEmpty := lines.dropWhile (fun ln => (trimAsciiStr ln).isEmpty)
   match nonEmpty with
   | [] => throw "Empty solver output."
   | status :: rest =>
-      let st := status.trim
+      let st := trimAsciiStr status
       if st = "sat" then
         let model ← parseSmtLines (rest.length.succ) rest #[]
         return .sat model
