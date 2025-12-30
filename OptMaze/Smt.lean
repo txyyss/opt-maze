@@ -50,7 +50,7 @@ private def dirConstr (dirName : String) (tileName : String) : String :=
 private def dirFalse (dirName : String) (tileName : String) : String :=
   s!"(not ({dirName} {tileName}))"
 
-private def declareTiles (m : BitMatrix) (lines : Array String) :
+private def declareTiles (m : BitMatrix) (lines : Array String) (allowCross : Bool) :
     Id (Array String × Array (Nat × Nat × String) × Array VirtNode) := do
   let mut lines := lines
   let mut tiles : Array (Nat × Nat × String) := #[]
@@ -62,7 +62,8 @@ private def declareTiles (m : BitMatrix) (lines : Array String) :
           let name := s!"tile_{r}_{c}"
           lines := lines.push s!"(declare-const {name} Int)"
           lines := lines.push s!"(assert (inRange {name}))"
-          -- lines := lines.push s!"(assert (not (= {name} 7)))" -- No Cross Tiles
+          if !allowCross then
+            lines := lines.push s!"(assert (not (= {name} 7)))" -- forbid cross tile
           tiles := tiles.push (r, c, name)
           let baseActive := s!"(and (not (= {name} 7)) (= (nonWhite {name}) 1))"
           nodes := nodes.push {
@@ -265,10 +266,10 @@ private def addConnectivity (m : BitMatrix) (lines : Array String)
           lines := lines.push s!"(assert (not {pU}))"
     return lines
 
-/-- Build SMT-LIB text for a given `BitMatrix`. `minNonWhite? = none` emits a `maximize` objective; `some k` emits a hard constraint `(#nonWhite >= k)` (for solvers without optimization). Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). -/
-def bitMatrixSmt2 (m : BitMatrix) (minNonWhite? : Option Nat := none) : String :=
+/-- Build SMT-LIB text for a given `BitMatrix`. `minNonWhite? = none` emits a `maximize` objective; `some k` emits a hard constraint `(#nonWhite >= k)` (for solvers without optimization). Cells with value `false` become tile variables; `true` cells are ignored (treated as absent). `allowCross` controls whether cross tiles (7) are permitted. -/
+def bitMatrixSmt2 (m : BitMatrix) (minNonWhite? : Option Nat := none) (allowCross : Bool := true) : String :=
   Id.run do
-    let (lines0, tiles, nodes) := declareTiles m smtPrelude
+    let (lines0, tiles, nodes) := declareTiles m smtPrelude allowCross
     let lines1 := addAdjacencyAndBoundary m lines0 tiles
     let lines2 := addConnectivity m lines1 nodes
     let mut lines := lines2

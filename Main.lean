@@ -17,6 +17,7 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
     match p.flag? "min" with
     | some f => some (f.as! Nat)
     | none => none
+  let allowCross : Bool := !(p.hasFlag "nocross")
 
   let smtPath := input.withExtension "smt2"
   let solPath := input.withExtension "sol"
@@ -26,7 +27,7 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
   let m ← readBitMatrix input
   let falseCount := OptMaze.countFalseCells m
   IO.println s!"black cells: {falseCount}"
-  let smt := OptMaze.bitMatrixSmt2 m minBound?
+  let smt := OptMaze.bitMatrixSmt2 m minBound? allowCross
   IO.FS.writeFile smtPath smt
   IO.println s!"SMT2 written to {smtPath}"
 
@@ -63,6 +64,7 @@ def optMazeCmd : Cmd := `[Cli|
   FLAGS:
     solver : String; "Optional solver executable (default: z3)."
     min : Nat;       "Optional lower bound on non-white tiles; use with solvers without maximize."
+    nocross;         "Disallow cross tiles (type 7)."
 
   ARGS:
     input : String; "01 matrix file path."
