@@ -294,6 +294,11 @@ structure TileAssignment where
   value : Int
   deriving Repr
 
+inductive SmtResult where
+  | sat (model : Array TileAssignment)
+  | unsat
+  | unknown (status : String)
+
 private def parseTileName (name : String) : Option (Nat × Nat) := do
   let parts := name.splitOn "_"
   match parts with
@@ -355,19 +360,23 @@ private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssig
               | [] =>
                   throw s!"Missing value line for {name}."
 
-/-- Parse all tile assignments from an SMT solver output string. Handles multi-line
+/-- Parse all tile assignments from an SMT solver output string, returning status. Handles multi-line
     `(define-fun …)` blocks where the value appears on the next line, and single-line
     definitions. Non-matching lines are ignored. -/
-def parseSmtSolution (contents : String) : Except String (Array TileAssignment) := do
+def parseSmtResult (contents : String) : Except String SmtResult := do
   let lines := contents.splitOn "\n"
-  parseSmtLines (lines.length.succ) lines #[]
-
-/-- Read a solver output file and parse it into tile assignments. -/
-def readSmtSolution (path : System.FilePath) : IO (Array TileAssignment) := do
-  let contents ← IO.FS.readFile path
-  match parseSmtSolution contents with
-  | .ok arr => pure arr
-  | .error msg => throw <| IO.userError s!"{path}: {msg}"
+  let nonEmpty := lines.dropWhile (fun ln => ln.trim.isEmpty)
+  match nonEmpty with
+  | [] => throw "Empty solver output."
+  | status :: rest =>
+      let st := status.trim
+      if st = "sat" then
+        let model ← parseSmtLines (rest.length.succ) rest #[]
+        return .sat model
+      else if st = "unsat" then
+        return .unsat
+      else
+        return .unknown st
 
 /-- Render assignments as a Mathematica-friendly list of triples `{{r, c, v}, …}`. -/
 def toMathematicaList (asgns : Array TileAssignment) : String :=

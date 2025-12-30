@@ -45,15 +45,25 @@ def main (args : List String) : IO Unit := do
       IO.FS.writeFile solPath z3Out
       IO.println s!"{z3Cmd} output written to {solPath}"
       IO.println s!"solver time: {OptMaze.formatDurationMs (tEnd - tStart)}"
-      -- 3) parse model and emit Mathematica list
-      match OptMaze.parseSmtSolution z3Out with
-      | .ok asgns =>
+      -- 3) inspect status and optionally parse model
+      match OptMaze.parseSmtResult z3Out with
+      | .ok (.sat asgns) =>
           let nonWhite := asgns.foldl (fun acc a => if a.value != 8 then acc + 1 else acc) 0
           IO.println s!"non-white tiles in model: {nonWhite}"
           let math := OptMaze.toMathematicaList asgns
           IO.FS.writeFile outPath math
           IO.println s!"Mathematica list written to {outPath}"
+      | .ok .unsat =>
+          IO.println "solver reported unsat; no model to parse."
+      | .ok (.unknown st) =>
+          throw <| IO.userError s!"Unknown solver status '{st}'."
       | .error msg =>
           throw <| IO.userError s!"Failed to parse solver output: {msg}"
   | _ =>
-      IO.eprintln "Usage: lake exe opt-maze <input-file> [z3-path]"
+      IO.eprintln <|
+        "Usage:\n" ++
+        "  lake exe opt-maze <input> [solver] [min]\n" ++
+        "    <input>  : 01 matrix file path\n" ++
+        "    [solver] : optional solver executable (default: z3)\n" ++
+        "    [min]    : optional Nat lower bound on non-white tiles; if only one optional\n" ++
+        "               argument and numeric, it is treated as [min] with default solver."
