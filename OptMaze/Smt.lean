@@ -109,6 +109,7 @@ private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
         | some false =>
             let n := s!"tile_{r}_{c+1}"
             lines := lines.push s!"(assert (= (hasRight {name}) (hasLeft {n})))"
+            lines := lines.push s!"(assert (not (and (= {name} 7) (= {n} 7))))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasRight" name})"
       else if !isRight then
@@ -119,6 +120,7 @@ private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
         | some false =>
             let n := s!"tile_{r}_{c-1}"
             lines := lines.push s!"(assert (= (hasLeft {name}) (hasRight {n})))"
+            lines := lines.push s!"(assert (not (and (= {name} 7) (= {n} 7))))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasLeft" name})"
       else if !isLeft then
@@ -129,6 +131,7 @@ private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
         | some false =>
             let n := s!"tile_{r+1}_{c}"
             lines := lines.push s!"(assert (= (hasDown {name}) (hasUp {n})))"
+            lines := lines.push s!"(assert (not (and (= {name} 7) (= {n} 7))))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasDown" name})"
       else if !isBottom then
@@ -139,6 +142,7 @@ private def addAdjacencyAndBoundary (m : BitMatrix) (lines : Array String)
         | some false =>
             let n := s!"tile_{r-1}_{c}"
             lines := lines.push s!"(assert (= (hasUp {name}) (hasDown {n})))"
+            lines := lines.push s!"(assert (not (and (= {name} 7) (= {n} 7))))"
         | _ =>
             lines := lines.push s!"(assert {dirFalse "hasUp" name})"
       else if !isTop then
