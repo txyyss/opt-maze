@@ -27,7 +27,13 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
   let m ← readBitMatrix input
   let falseCount := OptMaze.countFalseCells m
   IO.println s!"black cells: {falseCount}"
-  let smt := OptMaze.bitMatrixSmt2 m minBound? allowCross
+  let minBoundFinal ←
+    if minBound?.isNone && solver != "z3" then
+      IO.println s!"{solver} does not support maximize; using {falseCount} as lower bound"
+      pure (some falseCount)
+    else
+      pure minBound?
+  let smt := OptMaze.bitMatrixSmt2 m minBoundFinal allowCross
   IO.FS.writeFile smtPath smt
   IO.println s!"SMT2 written to {smtPath}"
 
