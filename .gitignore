@@ -3,3 +3,7 @@
 *.smt2
 *.out
 *.sol
+.DS_Store
+/nocross
+/tilemaze
+/weavemaze
