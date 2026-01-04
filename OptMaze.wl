@@ -12,10 +12,16 @@ addBars::usage="addBars[img_,ppos_]:=ReplacePixelValue[img,ppos->0]"
 vertCutImage::usage="vertCutImage[img_, {n1, n2, n3}]"
 
 
+exportImage::usage="exportImage[name_,img_]"
+
+
 exportImages::usage="exportImages[prefix_, imgs_]"
 
 
 drawTile::usage="drawTile[{i_, j_, t_}]"
+
+
+importSolution::usage="importSolution[filePrefix_String]"
 
 
 importSolutions::usage="importSolutions[filePrefix_String, count_]"
@@ -48,6 +54,9 @@ vertCutImage[img_,cuts_]:=Module[{wh=ImageDimensions[img]},Map[ImageTake[img,All
 imageExpr[img_]:=StringRiffle[ImageData[img],"\n",""]
 
 
+exportImage[name_,img_]:=Export[name<>".txt",imageExpr[img]]
+
+
 exportImages[prefix_,imgs_]:=MapIndexed[Export[prefix<>ToString[First[#2]]<>".txt",imageExpr[#1]]&,imgs]
 
 
@@ -57,7 +66,10 @@ tilePattern={{{1,2},{1,1},{2,1}},{{1,0},{1,1},{2,1}},{{0,1},{1,1},{1,0}},{{0,1},
 drawTile[{i_,j_,t_}]:={AbsoluteThickness[5],If[t<=7,Line[Map[{2(j-1),2(1-i)}+#&,tilePattern[[t]],{If[t<=6,1,2]}]]],AbsoluteThickness[0.5],Line[{{2(j-1),2(1-i)},{2j,2(1-i)},{2j,2(1-i)+2},{2j-2,2(1-i)+2},{2(j-1),2(1-i)}}]}
 
 
-importSolutions[filePrefix_String,count_]:=DeleteCases[Get[filePrefix<>ToString[#]<>".out"],{_,_,8}]&/@Table[i,{i,count}];
+importSolution[filePrefix_String]:=DeleteCases[Get[filePrefix<>".out"],{_,_,8}]
+
+
+importSolutions[filePrefix_String,count_]:=DeleteCases[Get[filePrefix<>ToString[#]<>".out"],{_,_,8}]&/@Table[i,{i,count}]
 
 
 horizontalShift[sols_,offset_]:=Map[{0,offset,0}+#&,sols]
