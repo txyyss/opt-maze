@@ -1,2 +1,3 @@
 #!/usr/bin/env zsh
-chez --script tilemaze
+set -e
+chez --script tilemaze "$@"

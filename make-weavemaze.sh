@@ -1,2 +1,3 @@
 #!/usr/bin/env zsh
-chez --script weavemaze
+set -e
+chez --script weavemaze "$@"
