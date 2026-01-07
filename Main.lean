@@ -78,4 +78,7 @@ def optMazeCmd : Cmd := `[Cli|
 
 /-- Entrypoint: delegate to `optMazeCmd`. -/
 def main (args : List String) : IO UInt32 :=
-  optMazeCmd.validate args
+  if args.isEmpty then
+    optMazeCmd.printHelp *> pure 0
+  else
+    optMazeCmd.validate args
