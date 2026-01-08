@@ -1,0 +1,224 @@
+% -----------------------------------------------------------------------------
+% November, 2023 update by Eve Torrence
+% This file contains a sample Bridges paper in LaTeX format.
+% The original was written by Carlo S\'equin in 2017, using previous
+% versions by Doug McKenna, Craig Kaplan, Reza Sarhangi, and others,
+% with \LaTeX\ contributions by Bruce Torrence and David Swart.
+% It has been vetted using TeXShop 5.10 on Mac OS Big Sur (11.6).
+% TeXShop is part of the TeX Live distribution, available
+% at http://www.tug.org/texlive/
+%
+% -----------------------------------------------------------------------------
+
+\documentclass[letterpaper,11pt]{article}
+\usepackage{amsmath, amsthm, amssymb}    % May not all be necessary
+\usepackage{bridges}   % Custom bridges proceedings style
+\usepackage{graphicx}   % For including pictures
+\usepackage[colorlinks=true, urlcolor=blue, citecolor=black, linkcolor=black]{hyperref}  
+% For formatting (clickable) URLs
+\usepackage{subcaption}   % For captioning multi-panel figures
+
+\urlstyle{rm}      % Display URLs in same font as body text
+
+% -----------------------------------------------------------------------------
+
+\title{From Patterns to Maze Solutions: An SMT-Based Construction}
+
+\author{Shengyi Wang
+  \vspace{10pt}\\
+  Shanghai Qi Zhi Institute; wangshengyi@sqz.ac.cn} % end \author
+% superscripts are only needed if there is more than one author
+
+% \date{[Draft as of \today]} % uncomment to use for your own draft purposes
+\date{}     % Suppress any date on submissions
+
+% -----------------------------------------------------------------------------
+
+\begin{document}
+
+\maketitle
+
+% Prevent page number 1 from being printed on the first page.
+\thispagestyle{empty}
+
+\begin{abstract}
+
+  We present an SMT-based method to synthesize maze solution paths that
+  follow a given input pattern, such as text or shapes. The problem is
+  encoded as global constraints on adjacency, continuity, and pattern
+  alignment, allowing a solver to find a valid solution path in one
+  run. The solution path is either a planar, self-avoiding route or a
+  layered weaving interpretable without conflict in its topology, and
+  this path then serves as a scaffold for generating both ordinary and
+  interwoven maze structures. Our approach separates solution path
+  construction from maze generation, providing a general pipeline from
+  input pattern to expressive maze puzzles.
+
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Introduction}
+
+We derive two distinct maze solution paths from the same input
+pattern: a planar path and a layered path with crossings. Each
+solution path then serves as a scaffold for maze
+construction. Figure~\ref{fig:inf} shows an example of the resulting
+planar and woven mazes (with and without highlighted solutions).
+
+\begin{figure}[h!tbp]
+  \centering
+  \begin{minipage}[b]{0.4\textwidth} 
+    \includegraphics[width=\textwidth]{figures/inf-plain-maze.eps}
+    \subcaption{}
+    \label{fig:1a}
+  \end{minipage}
+  ~ 
+  \begin{minipage}[b]{0.4\textwidth} 
+    \includegraphics[width=\textwidth]{figures/inf-plain-sol.eps}
+    \subcaption{}
+    \label{fig:1b}
+  \end{minipage}
+  \\
+  \begin{minipage}[b]{0.4\textwidth} 
+    \includegraphics[width=\textwidth]{figures/inf-inter-maze.eps}
+    \subcaption{}
+    \label{fig:1c}
+  \end{minipage}
+  ~
+  \begin{minipage}[b]{0.4\textwidth} 
+    \includegraphics[width=\textwidth]{figures/inf-inter-sol.eps}
+    \subcaption{}
+    \label{fig:1d}
+  \end{minipage}
+  \caption{Planar and woven mazes derived from the same ``$\infty$''
+    solution pattern: (a) Planar maze, \\ (b) Planar maze with solution,
+    (c) Woven maze, (d) Woven maze with solution.}
+  \label{fig:inf}
+\end{figure}
+
+The construction of the mazes considered in this paper can be viewed
+as a three-stage process. First, a given text or image is converted
+into a set of grid points. Second, a path is constructed on this grid,
+starting from a prescribed entry point and ending at a prescribed exit
+point, while traversing as many target grid points as
+possible. Depending on the intended maze type, this path may be
+required to be planar or may admit layered crossings. Third, a maze is
+generated from the resulting path.
+
+Among these steps, the first is straightforward and can be handled
+using existing image processing tools, such as rasterization followed
+by binary thresholding to extract a target set of grid points from the
+input pattern. The third step has been extensively studied in the
+literature, for example in~\cite{Buck2015MazesForProgrammers}. From a
+graph-theoretic perspective, maze generation amounts to constructing a
+spanning tree of an underlying grid graph. Planar mazes correspond to
+spanning trees of rectangular grid graphs, while woven mazes can be
+viewed as variations in which crossings are interpreted through local
+topological layering.
+
+Given a prescribed solution path, maze generation reduces to a minor
+modification of these standard algorithms: the solution path simply
+induces a partially specified spanning tree that must be extended to a
+full one. We adopt such algorithms with minor implementation
+variations. The central technical challenge of this work lies in the
+second step---the construction of a suitable path satisfying global
+structural constraints while remaining faithful to the input pattern.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem Analysis}
+
+We first consider the planar setting shown in Figures~\ref{fig:1a}
+and~\ref{fig:1b}, where the maze solution is an orthogonal,
+self-avoiding path on a grid. Given a set of grid points derived from
+an input pattern, the task is to construct a path from a prescribed
+entry point to a prescribed exit point that visits as many of these
+points as possible.
+
+A natural first comparison is with the Traveling Salesman Problem
+(TSP), an NP-complete problem~\cite{Papadimitriou1977EuclidTSP}. In
+its classical formulation, TSP seeks a shortest path visiting a given
+set of points, and such shortest solutions typically avoid
+self-intersections. This makes it tempting to apply existing TSP
+solvers to the present setting~\cite{Cook2012InPursuit}. In an ideal
+case, if a path visits \(n\) grid points by successive moves between
+adjacent points, its total length is exactly \(n-1\). Any diagonal
+segment would have length \(\sqrt{2}>1\) and therefore cannot appear
+in a truly optimal solution when a unit-length step between
+neighboring grid points is available.
+
+In practice, however, this ideal behavior cannot be relied upon for
+two reasons. First, the set of grid points induced by an input pattern
+may not admit a path that achieves the \(n-1\) bound, so even an optimal
+solution may necessarily include longer connections. Second, on large
+instances, practical solvers may return non-optimal paths, in which
+diagonal shortcuts appear. In both cases, the resulting solutions
+violate the intended orthogonal, grid-following structure and tend to
+require substantial ad hoc post-processing.
+
+From a graph-theoretic perspective, the problem is more accurately
+described as a Hamiltonian path problem on a grid graph, rather than a
+metric optimization problem. Hamiltonian path problems are NP-complete
+in general graphs~\cite{GareyJohnson1979}, and this hardness persists
+even for grid graphs~\cite{hamiltonGrid}, ruling out simple
+constructive or purely local solutions for arbitrary patterns.
+
+Various SAT encodings for Hamiltonian path and cycle problems have
+been studied, focusing on how to represent global connectivity and
+prevent sub-cycles within a propositional
+formula~\cite{Zhou2019EfficientSAT}. They already require nontrivial
+global connectivity constraints in the decision setting. Extending
+such encodings to optimization variants, such as finding a longest
+simple path that maximizes coverage of target grid points, further
+increases their complexity.
+
+An alternative line of work is suggested by tile-based methods for
+constructing single-line drawings, such as the approach of Bosch and
+Snyder~\cite{BoschSnyder2023TileBasedSingleLine}. In that setting,
+local path fragments are assembled subject to global consistency
+constraints, and the overall problem is formulated as (mixed-)integer
+linear program. The initial solution may contain additional disjoint
+loops, which can be handled either by merging them or by adding
+loop-elimination inequalities (in the spirit of subtour elimination)
+and re-solving the model.
+
+These observations motivate a constraint-based formulation that
+captures global path structure directly. Modern SAT and SMT solvers
+provide a natural framework for expressing adjacency and connectivity
+constraints, allowing the existence of a valid path to be decided in a
+single solver call.
+
+Finally, when using a tile-based encoding, the planar and layered
+cases differ only in a small number of local constraints. Planar paths
+forbid crossing tiles, while layered paths permit them through a
+vertical interpretation. As a result, planar path construction can be
+viewed as a constrained specialization of the layered case. By solving
+the more general layered problem, planar solutions are obtained simply
+by adding additional constraints, without modifying the overall
+encoding.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{SMT Encoding}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Related Work}
+
+%%%%%%%%%%%%%
+\section*{Summary and Conclusions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Acknowledgements}
+
+We use AI tools to improve wording for idiomatic expression, to check
+grammar and spelling, and to assist in completing portions of the code
+that generate SMT constraints.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% References %
+
+{\setlength{\baselineskip}{13pt}
+  \raggedright
+  \bibliographystyle{bridges}
+  \bibliography{maze}
+} % end setlength, raggedright
+
+\end{document}

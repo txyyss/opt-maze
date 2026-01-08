@@ -8,3 +8,10 @@
 /tilemaze
 /weavemaze
 /template
+/paper/figures/*.pdf
+*.aux
+*.bbl
+*.blg
+*.log
+/paper/maze.pdf
+/paper/outline.txt
