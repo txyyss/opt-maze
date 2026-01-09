@@ -18,8 +18,10 @@
 % For formatting (clickable) URLs
 \usepackage{subcaption}   % For captioning multi-panel figures
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 
 \urlstyle{rm}      % Display URLs in same font as body text
+\definecolor{tilebg}{rgb}{0.87,0.94,1}
 
 % -----------------------------------------------------------------------------
 
@@ -98,13 +100,21 @@ planar and woven mazes (with and without highlighted solutions).
 \end{figure}
 
 The construction of the mazes considered in this paper can be viewed
-as a three-stage process. First, a given text or image is converted
+as a three-step process, as shown in
+Figure~\ref{fig:pipeline}. First, a given text or image is converted
 into a set of grid points. Second, a path is constructed on this grid,
 starting from a prescribed entry point and ending at a prescribed exit
 point, while traversing as many target grid points as
 possible. Depending on the intended maze type, this path may be
 required to be planar or may admit layered crossings. Third, a maze is
 generated from the resulting path.
+
+\begin{figure}[h!tbp]
+  \centering
+  \input{figures/pipeline.tex}
+  \caption{Three-step pipeline from an input pattern to a maze. This work focuses on Step~2.}
+  \label{fig:pipeline}
+\end{figure}
 
 Among these steps, the first is straightforward and can be handled
 using existing image processing tools, such as rasterization followed
@@ -182,20 +192,22 @@ loops, which can be handled either by merging them or by adding
 loop-elimination inequalities (in the spirit of subtour elimination)
 and re-solving the model.
 
-These observations motivate a constraint-based formulation that
-captures global path structure directly. Modern SAT and SMT solvers
-provide a natural framework for expressing adjacency and connectivity
-constraints, allowing the existence of a valid path to be decided in a
-single solver call.
+In our work, we adopt the same tile-based representation of local
+path fragments, but instead of formulating the overall problem as an
+integer program, we cast the global connectivity and pattern coverage
+constraints in an SMT encoding tailored to maze paths. Modern SMT
+solvers provide a natural framework for expressing both propositional
+structure and integer constraints, allowing the existence of a valid
+path to be decided in a single solver call.
 
-Finally, when using a tile-based encoding, the planar and layered
-cases differ only in a small number of local constraints. Planar paths
-forbid crossing tiles, while layered paths permit them through a
-vertical interpretation. As a result, planar path construction can be
-viewed as a constrained specialization of the layered case. By solving
-the more general layered problem, planar solutions are obtained simply
-by adding additional constraints, without modifying the overall
-encoding.
+One major advantage of the tile-based representation is its ability
+to express structurally distinct path types within a single unified
+framework. Under this representation, the planar and layered cases
+differ only in the acceptability of crossing tiles: planar paths
+forbid crossings, while layered paths allow them. This illustrates
+that both path structures can arise from the same set of local
+primitives, with the planar case simply arising as a specialization
+of the layered one by disallowing crossing tiles.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{SMT Encoding}
@@ -208,6 +220,13 @@ variables represent adjacency and ordering decisions, and integer
 constraints enforce connectivity, degree, and coverage requirements. A
 single call to an SMT solver then decides the existence of a valid
 path satisfying all constraints.
+
+To formalize path construction as a constraint problem, we use a
+tile-based representation in which each tile encodes a local
+connectivity pattern. The tiles shown in Figure~\ref{fig:tiles} serve
+as the basic primitives in our encoding. Global properties such as
+continuity, uniqueness, and pattern coverage are enforced by
+constraints on how tiles may be placed and connected.
 
 \begin{figure}[h!tbp]
   \centering

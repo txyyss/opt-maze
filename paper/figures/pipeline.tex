@@ -1,0 +1,27 @@
+\begin{tikzpicture}[
+  box/.style={
+    draw=black!60,
+    rounded corners=3pt,
+    fill=tilebg,
+    inner xsep=6pt,
+    inner ysep=6pt,
+    align=center
+  },
+  arr/.style={
+    -{Latex[length=3mm,width=2mm]},
+    line width=1.5pt,
+    draw=black!70
+  },
+  lab/.style={font=\small, fill=white, inner sep=1pt}
+]
+
+  \node[box] (p) {Input Pattern\\(text or image)};
+  \node[box, right=16mm of p] (g) {Grid Points\\(rasterized)};
+  \node[box, right=16mm of g] (s) {Solution Path\\(planar or layered)};
+  \node[box, right=16mm of s] (m) {Maze\\Construction};
+
+  \draw[arr] (p) -- node[lab, above] {Step 1} (g);
+  \draw[arr] (g) -- node[lab, above] {Step 2} (s);
+  \draw[arr] (s) -- node[lab, above] {Step 3} (m);
+
+\end{tikzpicture}
