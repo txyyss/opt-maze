@@ -1,0 +1,58 @@
+\definecolor{tilebg}{rgb}{0.87,0.94,1}
+\begin{tikzpicture}[
+  tile/.style={
+    draw=gray!60,
+    fill=tilebg,
+    line width=0.5pt
+  },
+  pathseg/.style={
+    draw=black,
+    line width=6pt,
+    line cap=butt
+  },
+  num/.style={
+    anchor=north
+  }
+]
+
+\def\s{1.6}    % tile size (bigger than before)
+\def\gap{0.5} % horizontal gap between tiles (wider spacing)
+\pgfmathsetmacro{\w}{0.5*\s} % centerline offset = s/2
+
+% draw one tile at index i (0-based), with drawing code and label
+\newcommand{\tiletwo}[3]{%
+  \begin{scope}[shift={({(#1)*(\s+\gap)},0)}]
+    \draw[tile] (0,0) rectangle (\s,\s);
+    #2
+    \node[num] at (\w,-0.05*\s) {#3};
+  \end{scope}
+}
+
+% 1
+\tiletwo{0}{\draw[pathseg] (\w,\s) -- (\w,\w) -- (\s,\w);}{1}
+
+% 2
+\tiletwo{1}{\draw[pathseg] (\w,0) -- (\w,\w) -- (\s,\w);}{2}
+
+% 3
+\tiletwo{2}{\draw[pathseg] (0,\w) -- (\w,\w) -- (\w,0);}{3}
+
+% 4
+\tiletwo{3}{\draw[pathseg] (0,\w) -- (\w,\w) -- (\w,\s);}{4}
+
+% 5
+\tiletwo{4}{\draw[pathseg] (\w,0) -- (\w,\s);}{5}
+
+% 6
+\tiletwo{5}{\draw[pathseg] (0,\w) -- (\s,\w);}{6}
+
+% 7
+\tiletwo{6}{
+  \draw[pathseg] (\w,0) -- (\w,\s);
+  \draw[pathseg] (0,\w) -- (\s,\w);
+}{7}
+
+% 8
+\tiletwo{7}{}{8}
+
+\end{tikzpicture}
