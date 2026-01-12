@@ -200,21 +200,29 @@ of the layered one by disallowing crossing tiles.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{SMT Encoding}
 
-We encode the path construction problem in the quantifier-free theory
-of linear integer arithmetic (QF\_LIA), a fragment of Satisfiability
-Modulo Theories (SMT) that permits reasoning about Boolean conditions
-together with integer linear constraints. In this formulation, Boolean
-variables represent adjacency and ordering decisions, and integer
-constraints enforce connectivity, degree, and coverage requirements. A
-single call to an SMT solver then decides the existence of a valid
-path satisfying all constraints.
+Before describing the constraint encoding, we first formalize the
+underlying path construction problem. Let \(P \subset \mathbb{Z}^2\)
+be a finite set of integer grid points, obtained by rasterizing a
+given input pattern and selecting the grid points corresponding to
+foreground pixels. Two points \((x,y),(x',y') \in \mathbb{Z}^2\) are
+said to be adjacent if and only if \(|x-x'|+|y-y'|=1\). Given two
+designated points \(s,t \in P\), the objective is to find an
+orthogonal path
+\[
+s = a_0, a_1, \ldots, a_n = t,
+\]
+where each \(a_i \in P\), consecutive points are adjacent. Grid points
+are visited at most once in the planar setting and at most twice in
+the layered setting. Among all such paths, we seek one that maximizes
+the number of visited points, i.e., the length \(n\).
 
-To formalize path construction as a constraint problem, we use a
-tile-based representation in which each tile encodes a local
-connectivity pattern. The tiles shown in Figure~\ref{fig:tiles} serve
-as the basic primitives in our encoding. Global properties such as
-continuity, uniqueness, and pattern coverage are enforced by
-constraints on how tiles may be placed and connected.
+To encode this path construction problem, we first represent paths
+using a tile-based formulation. Each grid point is associated with a
+tile specifying a local path connectivity pattern. The tile types
+shown in Figure~\ref{fig:tiles} serve as the basic primitives of this
+representation. Under this formulation, the existence of a valid path
+is reduced to the problem of placing tiles so that local connectivity
+constraints are satisfied and global path structure emerges.
 
 \begin{figure}[h!tbp]
   \centering
@@ -222,6 +230,16 @@ constraints on how tiles may be placed and connected.
   \caption{Tile types encoding local path connectivity patterns.}
   \label{fig:tiles}
 \end{figure}
+
+We then encode the resulting tile placement problem in the
+quantifier-free theory of linear integer arithmetic (QF\_LIA), a
+fragment of Satisfiability Modulo Theories (SMT) that permits
+reasoning about Boolean conditions together with integer linear
+constraints. In this encoding, Boolean variables represent adjacency
+and ordering decisions induced by tile connectivity, while integer
+constraints enforce global properties such as connectivity, degree,
+and coverage. A single call to an SMT solver then decides the
+existence of a valid path satisfying all constraints.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Related Work}
