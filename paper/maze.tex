@@ -158,12 +158,12 @@ neighboring grid points is available.
 
 In practice, however, this ideal behavior cannot be relied upon for
 two reasons. First, the set of grid points induced by an input pattern
-may not admit a path that achieves the \(n-1\) bound, so even an optimal
-solution may necessarily include longer connections. Second, on large
-instances, practical solvers may return non-optimal paths, in which
-diagonal shortcuts appear. In both cases, the resulting solutions
-violate the intended orthogonal, grid-following structure and tend to
-require substantial ad hoc post-processing.
+may not admit a path that achieves the \(n-1\) bound, so even an
+optimal solution may necessarily include longer connections. Second,
+on large instances, practical solvers may return non-optimal paths, in
+which diagonal shortcuts appear. In both cases, the resulting
+solutions violate the intended orthogonal, grid-following structure
+and tend to require substantial ad hoc post-processing.
 
 From a graph-theoretic perspective, the problem is more accurately
 described as a Hamiltonian path problem on a grid graph, rather than a
@@ -191,22 +191,22 @@ loops, which can be handled either by merging them or by adding
 loop-elimination inequalities (in the spirit of subtour elimination)
 and re-solving the model.
 
-In our work, we adopt the same tile-based representation of local
-path fragments, but instead of formulating the overall problem as an
+In our work, we adopt the same tile-based representation of local path
+fragments, but instead of formulating the overall problem as an
 integer program, we cast the global connectivity and pattern coverage
 constraints in an SMT encoding tailored to maze paths. Modern SMT
 solvers provide a natural framework for expressing both propositional
 structure and integer constraints, allowing the existence of a valid
 path to be decided in a single solver call.
 
-One major advantage of the tile-based representation is its ability
-to express structurally distinct path types within a single unified
+One major advantage of the tile-based representation is its ability to
+express structurally distinct path types within a single unified
 framework. Under this representation, the planar and layered cases
 differ only in the acceptability of crossing tiles: planar paths
 forbid crossings, while layered paths allow them. This illustrates
 that both path structures can arise from the same set of local
-primitives, with the planar case simply arising as a specialization
-of the layered one by disallowing crossing tiles.
+primitives, with the planar case simply arising as a specialization of
+the layered one by disallowing crossing tiles.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{SMT Encoding}
@@ -252,7 +252,6 @@ constraints enforce global properties such as connectivity, degree,
 and coverage. A single call to an SMT solver then decides the
 existence of a valid path satisfying all constraints.
 
-%% \subsection*{Basic Definitions, Local Constraints and Objective}
 For each grid cell \((r,c) \in P\), we introduce an integer-valued
 tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
 of the tile types shown in Figure~\ref{fig:tiles}. Local connectivity
@@ -292,8 +291,26 @@ These definitions can be directly encoded in SMT-LIB format. For example:
 \end{verbatim}
 \end{tcolorbox}
 
-\subsection*{Local Connectivity Constraints}
+Using the indicator function \(\mathrm{nonWhite}\) defined
+in~\eqref{eq:tile-defs}, we measure the length of a candidate path by
+the total number of grid cells that participate in it. Concretely, we
+define the coverage value
+\begin{equation}
+\label{eq:coverage}
+C = \sum_{(r,c)\in P} \mathrm{nonWhite}(t_{r,c}).
+\end{equation}
+Depending on solver support, this coverage can either be maximized
+directly or constrained to exceed a prescribed lower bound. In
+SMT-LIB, the latter is expressed by asserting a coverage constraint:
+\begin{tcolorbox}[smtsimple]
+\begin{verbatim}
+(assert (>= (+ (nonWhite tile_3_1) (nonWhite tile_3_2) ...) K))
+\end{verbatim}
+\end{tcolorbox}
+When supported, this constraint can alternatively be replaced by a
+direct maximization objective.
 
+\subsection*{Local Connectivity Constraints}
 Local connectivity constraints enforce consistency between neighboring
 tiles and regulate how the path interacts with the boundary of the
 grid. We first impose adjacency consistency, and then handle boundary
@@ -316,8 +333,9 @@ within the domain, we require
 \end{equation}
 
 At the boundary of the grid, path segments are not allowed to exit the
-domain. Let the grid have width \(W\) and height \(H\). For any boundary
-cell \((r,c)\) other than the designated entry and exit cells, we impose
+domain. Let the grid have width \(W\) and height \(H\). For any
+boundary cell \((r,c)\) other than the designated entry and exit
+cells, we impose
 \begin{equation}
 \label{eq:boundary}
 \begin{aligned}
@@ -337,8 +355,8 @@ The designated entry and exit cells \(s=(r_s,c_s)\) and
 explicit exceptions to the boundary constraints. To ensure a single
 connection to the exterior, the tile type at each endpoint is fixed
 according to its boundary location: if an endpoint lies on the left or
-right boundary, a horizontal tile is enforced; if it lies on the top or
-bottom boundary, a vertical tile is enforced. Concretely, we impose
+right boundary, a horizontal tile is enforced; if it lies on the top
+or bottom boundary, a vertical tile is enforced. Concretely, we impose
 \begin{equation}
 \label{eq:endpoints}
 \begin{aligned}
@@ -351,9 +369,8 @@ r_t \in \{0,H-1\} &\;\Rightarrow\; t_{r_t,c_t} = 5,
 where tile types \(5\) and \(6\) correspond to vertical and horizontal
 path segments, respectively.
 
-The above constraints translate directly into SMT-LIB assertions; a
-few representative examples are shown below.
-
+The above constraints translate directly into SMT-LIB assertions. Here
+are a few representative examples:
 \begin{tcolorbox}[smtsimple]
 \begin{verbatim}
 (assert (= tile_27_18 6))                             ; endpoint / boundary
