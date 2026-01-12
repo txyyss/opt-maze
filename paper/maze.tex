@@ -10,8 +10,19 @@
 
 \urlstyle{rm}      % Display URLs in same font as body text
 \definecolor{tilebg}{rgb}{0.87,0.94,1}
+\usepackage{tcolorbox}
 
-% -----------------------------------------------------------------------------
+\tcbset{
+  smtsimple/.style={
+    colback=white,
+    colframe=black,
+    boxrule=0.7pt,
+    top=5pt, bottom=5pt,
+    boxsep=0pt,
+    %% before skip=1ex,
+    %% after skip=1ex,
+  }
+}
 
 \title{From Patterns to Maze Solutions: An SMT-Based Construction}
 
@@ -240,6 +251,123 @@ and ordering decisions induced by tile connectivity, while integer
 constraints enforce global properties such as connectivity, degree,
 and coverage. A single call to an SMT solver then decides the
 existence of a valid path satisfying all constraints.
+
+%% \subsection*{Basic Definitions, Local Constraints and Objective}
+For each grid cell \((r,c) \in P\), we introduce an integer-valued
+tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
+of the tile types shown in Figure~\ref{fig:tiles}. Local connectivity
+semantics are specified by a collection of auxiliary functions on tile
+types, summarized in~\eqref{eq:tile-defs}. These definitions form the
+basis for all subsequent local and global constraints. Each tile
+variable \(t_{r,c}\) is declared as an integer constrained by
+\(\mathrm{inRange}\).
+\begin{equation}
+\label{eq:tile-defs}
+\setlength{\jot}{2pt}
+\begin{aligned}
+\mathrm{inRange}(t)
+&= 1 \le t \le 8,
+&
+\mathrm{hasUp}(t)
+&= t \in \{1,4,5,7\},
+&
+\mathrm{hasRight}(t)
+&= t \in \{1,2,6,7\},
+\\
+\mathrm{nonWhite}(t)
+&= \mathbf{1}_{t \neq 8},
+&
+\mathrm{hasDown}(t)
+&= t \in \{2,3,5,7\},
+&
+\mathrm{hasLeft}(t)
+&= t \in \{3,4,6,7\}.
+\end{aligned}
+\end{equation}
+These definitions can be directly encoded in SMT-LIB format. For example:
+\begin{tcolorbox}[smtsimple]
+\begin{verbatim}
+(define-fun hasUp ((t Int)) Bool (or (= t 1) (= t 4) (= t 5) (= t 7)))
+(define-fun nonWhite ((t Int)) Int (ite (= t 8) 0 1))
+\end{verbatim}
+\end{tcolorbox}
+
+\subsection*{Local Connectivity Constraints}
+
+Local connectivity constraints enforce consistency between neighboring
+tiles and regulate how the path interacts with the boundary of the
+grid. We first impose adjacency consistency, and then handle boundary
+behavior, distinguishing general boundary cells from the designated
+entry and exit.
+
+For any two horizontally adjacent grid cells \((r,c)\) and
+\((r,c+1)\), a path segment exiting to the right of \((r,c)\) must
+enter from the left of \((r,c+1)\). An analogous condition holds for
+vertical adjacency. Formally, for all adjacent pairs of grid cells
+within the domain, we require
+\begin{equation}
+\label{eq:adjacency}
+\begin{aligned}
+\mathrm{hasRight}(t_{r,c}) &\;\Longleftrightarrow\;
+\mathrm{hasLeft}(t_{r,c+1}), \\
+\mathrm{hasDown}(t_{r,c}) &\;\Longleftrightarrow\;
+\mathrm{hasUp}(t_{r+1,c}).
+\end{aligned}
+\end{equation}
+
+At the boundary of the grid, path segments are not allowed to exit the
+domain. Let the grid have width \(W\) and height \(H\). For any boundary
+cell \((r,c)\) other than the designated entry and exit cells, we impose
+\begin{equation}
+\label{eq:boundary}
+\begin{aligned}
+(r,c)\notin\{s,t\},\ c = 0
+&\;\Rightarrow\; \neg \mathrm{hasLeft}(t_{r,c}), \\
+(r,c)\notin\{s,t\},\ c = W-1
+&\;\Rightarrow\; \neg \mathrm{hasRight}(t_{r,c}), \\
+(r,c)\notin\{s,t\},\ r = 0
+&\;\Rightarrow\; \neg \mathrm{hasUp}(t_{r,c}), \\
+(r,c)\notin\{s,t\},\ r = H-1
+&\;\Rightarrow\; \neg \mathrm{hasDown}(t_{r,c}).
+\end{aligned}
+\end{equation}
+
+The designated entry and exit cells \(s=(r_s,c_s)\) and
+\(t=(r_t,c_t)\) are assumed to lie on the boundary and are treated as
+explicit exceptions to the boundary constraints. To ensure a single
+connection to the exterior, the tile type at each endpoint is fixed
+according to its boundary location: if an endpoint lies on the left or
+right boundary, a horizontal tile is enforced; if it lies on the top or
+bottom boundary, a vertical tile is enforced. Concretely, we impose
+\begin{equation}
+\label{eq:endpoints}
+\begin{aligned}
+c_s \in \{0,W-1\} &\;\Rightarrow\; t_{r_s,c_s} = 6, &
+r_s \in \{0,H-1\} &\;\Rightarrow\; t_{r_s,c_s} = 5, \\
+c_t \in \{0,W-1\} &\;\Rightarrow\; t_{r_t,c_t} = 6, &
+r_t \in \{0,H-1\} &\;\Rightarrow\; t_{r_t,c_t} = 5,
+\end{aligned}
+\end{equation}
+where tile types \(5\) and \(6\) correspond to vertical and horizontal
+path segments, respectively.
+
+The above constraints translate directly into SMT-LIB assertions; a
+few representative examples are shown below.
+
+\begin{tcolorbox}[smtsimple]
+\begin{verbatim}
+(assert (= tile_27_18 6))                             ; endpoint / boundary
+(assert (not (hasUp tile_16_1)))                      ; boundary no-exit
+(assert (= (hasRight tile_16_2) (hasLeft tile_16_3))) ; adjacency
+\end{verbatim}
+\end{tcolorbox}
+
+Together, these constraints ensure that all local path segments are
+pairwise compatible and that the path interacts with the boundary only
+at the prescribed entry and exit. However, they do not prevent the
+formation of multiple disconnected components or closed loops, which
+necessitates additional global connectivity constraints described
+next.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Related Work}
