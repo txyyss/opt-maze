@@ -386,6 +386,69 @@ formation of multiple disconnected components or closed loops, which
 necessitates additional global connectivity constraints described
 next.
 
+\subsection*{Global Connectivity Constraints}
+Figure~\ref{fig:na} illustrates a typical failure mode of purely local
+constraints: although all adjacent tiles are locally compatible, the
+selected tiles form multiple closed loops rather than a single path
+connecting the designated entry and exit. Such configurations are
+locally consistent but globally invalid, motivating the introduction
+of explicit global connectivity constraints.
+
+\begin{figure}[h!tbp]
+  \centering
+  \begin{minipage}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{figures/abnormal1.eps}
+    \subcaption{}
+    \label{fig:na}
+  \end{minipage}
+  ~
+  \begin{minipage}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{figures/abnormal2.eps}
+    \subcaption{}
+    \label{fig:nb}
+  \end{minipage}
+  ~
+  \begin{minipage}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{figures/abnormal3.eps}
+    \subcaption{}
+    \label{fig:nc}
+  \end{minipage}
+  ~
+  \begin{minipage}[b]{0.23\textwidth}
+    \includegraphics[width=\textwidth]{figures/abnormal4.eps}
+    \subcaption{}
+    \label{fig:nd}
+  \end{minipage}
+  \caption{Failure modes motivating global connectivity constraints.
+    (a) Local consistency alone permits disconnected loops.  (b--d)
+    Rank-based connectivity can fail in the presence of crossing
+    tiles.}
+  \label{fig:abnormal}  
+\end{figure}
+
+A natural way to enforce global connectivity is to impose an explicit
+ordering on the tiles participating in the path. Each tile is assigned
+a rank indicating its position along the path and selects a neighboring
+tile with smaller rank as its predecessor. Together with the local
+adjacency constraints, this parent--rank structure is intended to
+connect all selected tiles into a single path rooted at the entry
+point.
+
+For simple, non-branching path segments, this approach behaves as
+expected. However, in the presence of crossing tiles, the assumption
+that each grid cell corresponds to a single path position breaks down.
+Figure~\ref{fig:nb} shows a representative solution produced under this
+scheme, which can satisfy the parent--rank constraints, as illustrated
+by the rank assignment in Figure~\ref{fig:nc}.
+
+From a graph-theoretic perspective, this solution admits an Eulerian
+single-stroke traversal: only the endpoints have degree \(1\), while
+all other tiles have even degree. Such a traversal is shown in
+Figure~\ref{fig:nd}. However, the resulting path corresponds to a
+purely planar interpretation of the crossing, rather than the intended
+woven over--under structure. This motivates a refinement of the
+connectivity model at crossings, introduced next.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Related Work}
 
