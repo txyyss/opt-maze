@@ -387,12 +387,11 @@ necessitates additional global connectivity constraints described
 next.
 
 \subsection*{Global Connectivity Constraints}
-Figure~\ref{fig:na} illustrates a typical failure mode of purely local
-constraints: although all adjacent tiles are locally compatible, the
-selected tiles form multiple closed loops rather than a single path
-connecting the designated entry and exit. Such configurations are
-locally consistent but globally invalid, motivating the introduction
-of explicit global connectivity constraints.
+Figure~\ref{fig:na} shows a typical failure mode of purely local
+constraints: even when all adjacent tiles are locally compatible, the
+selected tiles may form a detached loop rather than a single path
+connecting the designated entry and exit. This motivates explicit
+global connectivity constraints.
 
 \begin{figure}[h!tbp]
   \centering
@@ -426,20 +425,67 @@ of explicit global connectivity constraints.
   \label{fig:abnormal}  
 \end{figure}
 
-A natural way to enforce global connectivity is to impose an explicit
-ordering on the tiles participating in the path. Each tile is assigned
-a rank indicating its position along the path and selects a neighboring
-tile with smaller rank as its predecessor. Together with the local
-adjacency constraints, this parent--rank structure is intended to
-connect all selected tiles into a single path rooted at the entry
-point.
+We enforce global connectivity by introducing an explicit predecessor
+relation together with a strictly decreasing rank. We write
+\(\mathrm{nonWhite}(t_{r,c})=1\) to indicate that the tile at position
+\((r,c)\) is not empty and thus participates in the path.
+
+For each tile position \((r,c)\) we introduce an integer rank variable
+\(\rho_{r,c}\) and four Boolean parent-choice variables
+\(p^{R}_{r,c},p^{L}_{r,c},p^{U}_{r,c},p^{D}_{r,c}\). For example,
+\(p^{R}_{r,c}\) means that position \((r,c)\) selects its right
+neighbor as its predecessor. We fix the entry position \(s=(r_s,c_s)\)
+as the root. The root has rank \(0\) and no parent choice:
+\[
+\rho_{r_s,c_s}=0,
+\qquad
+\neg p^{R}_{r_s,c_s}\wedge \neg p^{L}_{r_s,c_s}\wedge
+\neg p^{U}_{r_s,c_s}\wedge \neg p^{D}_{r_s,c_s}.
+\]
+All other non-empty tiles must have positive rank and choose at least
+one parent direction:
+\[
+\mathrm{nonWhite}(t_{r,c}) = 1 \wedge (r,c)\neq (r_s,c_s)
+\;\Rightarrow\;
+\bigl(p^{R}_{r,c}\vee p^{L}_{r,c}\vee p^{U}_{r,c}\vee p^{D}_{r,c}\bigr)
+\;\wedge\; 1 \le \rho_{r,c}\le \vert P\rvert.
+\]
+
+A parent choice must follow an existing local edge to a neighboring
+non-empty tile, with matching boundary predicates and strictly
+decreasing rank. For instance,
+\[
+p^{R}_{r,c}\;\Rightarrow\; \rho_{r,c+1}<\rho_{r,c} \wedge
+\mathrm{nonWhite}(t_{r,c}) = 1 \wedge \mathrm{nonWhite}(t_{r,c+1})=1
+\wedge \mathrm{hasRight}(t_{r,c}) \wedge \mathrm{hasLeft}(t_{r,c+1}) .
+\]
+The constraints for \(p^{L}_{r,c}, p^{U}_{r,c}, p^{D}_{r,c}\) are
+obtained by swapping the neighbor coordinates and the corresponding
+directional predicate pairs on the current and adjacent tiles.
+
+These constraints translate directly into SMT-LIB assertions, e.g.:
+\begin{tcolorbox}[smtsimple]
+\begin{verbatim}
+(assert (=> (= (nonWhite tile_13_2) 1)
+            (and (>= rank_13_2 1) (<= rank_13_2 507))))
+(assert (=> (= (nonWhite tile_13_2) 1) (or pR_13_2 pL_13_2 pD_13_2 pU_13_2)))
+(assert (=> pR_13_2 (and (< rank_13_3 rank_13_2)
+                         (= (nonWhite tile_13_2) 1) (= (nonWhite tile_13_3) 1)
+                         (hasRight tile_13_2) (hasLeft tile_13_3))))
+\end{verbatim}
+\end{tcolorbox}
+
+Together, these constraints ensure that every participating position
+(except the root) selects a locally valid predecessor of smaller rank,
+thereby excluding disconnected loops (a directed cycle would force a
+strict rank decrease around the cycle).
 
 For simple, non-branching path segments, this approach behaves as
 expected. However, in the presence of crossing tiles, the assumption
-that each grid cell corresponds to a single path position breaks down.
-Figure~\ref{fig:nb} shows a representative solution produced under this
-scheme, which can satisfy the parent--rank constraints, as illustrated
-by the rank assignment in Figure~\ref{fig:nc}.
+that each tile position corresponds to a single path position breaks
+down. Figure~\ref{fig:nb} shows a representative solution produced under
+this scheme, which can satisfy the parent--rank constraints, as
+illustrated by the rank assignment in Figure~\ref{fig:nc}.
 
 From a graph-theoretic perspective, this solution admits an Eulerian
 single-stroke traversal: only the endpoints have degree \(1\), while
