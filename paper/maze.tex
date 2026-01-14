@@ -422,7 +422,7 @@ global connectivity constraints.
     (a) Local consistency alone permits disconnected loops.  (b--d)
     Rank-based connectivity can fail in the presence of crossing
     tiles.}
-  \label{fig:abnormal}  
+  \label{fig:abnormal}
 \end{figure}
 
 We enforce global connectivity by introducing an explicit predecessor
@@ -444,12 +444,13 @@ as the root. The root has rank \(0\) and no parent choice:
 \]
 All other non-empty tiles must have positive rank and choose at least
 one parent direction:
-\[
+\begin{equation}
+\label{eq:parent}
 \mathrm{nonWhite}(t_{r,c}) = 1 \wedge (r,c)\neq (r_s,c_s)
 \;\Rightarrow\;
 \bigl(p^{R}_{r,c}\vee p^{L}_{r,c}\vee p^{U}_{r,c}\vee p^{D}_{r,c}\bigr)
 \;\wedge\; 1 \le \rho_{r,c}\le \vert P\rvert.
-\]
+\end{equation}
 
 A parent choice must follow an existing local edge to a neighboring
 non-empty tile, with matching boundary predicates and strictly
@@ -480,12 +481,13 @@ Together, these constraints ensure that every participating position
 thereby excluding disconnected loops (a directed cycle would force a
 strict rank decrease around the cycle).
 
-For simple, non-branching path segments, this approach behaves as
-expected. However, in the presence of crossing tiles, the assumption
-that each tile position corresponds to a single path position breaks
-down. Figure~\ref{fig:nb} shows a representative solution produced under
-this scheme, which can satisfy the parent--rank constraints, as
-illustrated by the rank assignment in Figure~\ref{fig:nc}.
+For simple, non-branching path segments, the combined local adjacency
+and global parent--rank constraints behave as expected. However, in
+the presence of crossing tiles, the assumption that each tile position
+corresponds to a single path position breaks down. Figure~\ref{fig:nb}
+shows a representative solution produced under this scheme, which can
+satisfy the parent--rank constraints, as illustrated by the rank
+assignment in Figure~\ref{fig:nc}.
 
 From a graph-theoretic perspective, this solution admits an Eulerian
 single-stroke traversal: only the endpoints have degree \(1\), while
@@ -495,8 +497,121 @@ purely planar interpretation of the crossing, rather than the intended
 woven over--under structure. This motivates a refinement of the
 connectivity model at crossings, introduced next.
 
+\subsection*{Crossing tiles via virtual path elements}
+
+We address this limitation by modeling a crossing tile as two
+co-located virtual path elements: a horizontal element and a vertical
+element. Ordinary non-empty, non-crossing tiles contribute a single
+base path element.
+
+Formally, we define activation predicates by
+\[
+\begin{aligned}
+A^{\mathsf{base}}_{r,c}
+&= \bigl(\mathrm{nonWhite}(t_{r,c})=1\bigr)\wedge (t_{r,c}\neq 7),
+\\
+A^{h}_{r,c}
+&= (t_{r,c}=7),
+\qquad
+A^{v}_{r,c}
+= (t_{r,c}=7).
+\end{aligned}
+\]
+Thus a crossing activates two elements (\(h\) and \(v\)), while a
+non-crossing, non-empty tile activates exactly one base element in the
+connectivity model.
+
+For each kind \(k\in\{\mathsf{base},h,v\}\) we introduce an integer
+rank \(\rho^{k}_{r,c}\) and directional parent-choice Booleans
+\(p^{R,k}_{r,c},p^{L,k}_{r,c},p^{U,k}_{r,c},p^{D,k}_{r,c}\). The
+global parent--rank constraints introduced in
+Equation~\eqref{eq:parent} are now instantiated separately for each
+virtual element \(k\), guarded by the corresponding activation
+predicate \(A^{k}_{r,c}\). For the split elements \(h\) and \(v\),
+parent choices in unsupported directions are explicitly disallowed
+(e.g., \(p^{R,v}_{r,c}\) and \(p^{L,v}_{r,c}\) are constrained to be
+false), ensuring that each element participates in the path only along
+its admissible directions. Concretely, for any active non-root
+element, the requirement of selecting a parent direction and having a
+positive rank is enforced per element:
+\begin{equation}
+\label{eq:split-parent}
+A^{k}_{r,c}\wedge (r,c)\neq (r_s,c_s)\;\Rightarrow\;
+\Bigl(\bigvee_{d\in\{R,L,U,D\}} p^{d,k}_{r,c}\Bigr)
+\;\wedge\; 1\le \rho^{k}_{r,c}\le |P|.
+\end{equation}
+Since each grid position admits up to three such elements
+(\(k\in\{\text{base},h,v\}\)), this instantiation results in three
+parallel instances of the parent--rank constraints at each
+position. As in the non-crossing case, at the root \(s=(r_s,c_s)\) we
+impose \(\rho^{k}_{r_s,c_s}=0\) whenever \(A^{k}_{r_s,c_s}\) holds and
+forbid all parent choices.
+
+Since \(A^{h}_{r,c}=A^{v}_{r,c}=(t_{r,c}=7)\), a crossing tile
+simultaneously activates both virtual elements, and all subsequent
+parent--rank constraints apply to \(h\) and \(v\) in tandem.
+
+Directional feasibility constraints are extended in the minimal way: a
+chosen parent direction must follow an existing local edge, match the
+neighboring edge, and decrease rank, but the neighbor rank may belong
+either to \(\mathsf{base}\) (if the neighbor is non-crossing) or to the
+corresponding crossing kind (if the neighbor is also a crossing). For
+example,
+\[
+p^{R,h}_{r,c}\;\Rightarrow\;
+\bigl(A^{h}_{r,c}\wedge \mathrm{hasRight}(t_{r,c})\bigr)
+\wedge
+\mathrm{hasLeft}(t_{r,c+1})
+\wedge
+\Bigl(
+A^{\mathsf{base}}_{r,c+1}\wedge \rho^{\mathsf{base}}_{r,c+1}<\rho^{h}_{r,c}
+\;\vee\;
+A^{h}_{r,c+1}\wedge \rho^{h}_{r,c+1}<\rho^{h}_{r,c}
+\Bigr).
+\]
+In the SMT encoding, this implication expands into a disjunction over
+the possible kinds of the neighboring tile; for instance:
+\begin{tcolorbox}[smtsimple]
+\begin{verbatim}
+(assert (=> pR_31_13_h
+  (or (and (= tile_31_14 7)
+           (= tile_31_13 7) (hasRight tile_31_13) (hasLeft tile_31_14)
+           (< rank_31_14_h rank_31_13_h))
+      (and (and (not (= tile_31_14 7)) (= (nonWhite tile_31_14) 1))
+           (= tile_31_13 7) (hasRight tile_31_13) (hasLeft tile_31_14)
+           (< rank_31_14_base rank_31_13_h)))))
+\end{verbatim}
+\end{tcolorbox}
+
+Analogous implications are added for the other directions, with the
+neighbor kind chosen according to the move direction (horizontal uses
+\(\mathsf{base}/h\), vertical uses \(\mathsf{base}/v\)).
+
+Note that the coverage definition~\eqref{eq:coverage} remains
+unchanged, as it is expressed solely in terms of the tile variables
+\(t_{r,c}\) and \(\mathrm{nonWhite}(t_{r,c})\). A crossing still
+contributes a single occupied grid cell, independent of its virtual
+\(h/v\) split, so the same coverage constraint (or objective) applies
+verbatim.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section*{Related Work}
+\section*{Illustrative Example}
+
+Figure~\ref{fig:examples} shows a large woven maze produced by the
+proposed encoding, with the solution path highlighted in red. Crossing
+tiles enable a single-stroke path that passes through intersections in
+an over--under fashion. To form a connected grid, additional links are
+manually introduced between otherwise disjoint letter strokes and at
+the designated endpoints. For visual clarity, the SMT encoding further
+forbids adjacent crossing tiles; this restriction is purely aesthetic
+and does not affect the core connectivity model.
+
+\begin{figure}[h!tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figures/art-inter-sol.eps}
+  \caption{A large woven maze generated by the proposed encoding.}
+  \label{fig:examples}
+\end{figure}
 
 %%%%%%%%%%%%%
 \section*{Summary and Conclusions}
