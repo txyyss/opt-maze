@@ -24,6 +24,9 @@
   }
 }
 
+\newcommand{\QFLIA}{\texttt{QF\char`_ LIA}}
+\newcommand{\kind}[1]{\mathsf{#1}}
+
 \title{From Patterns to Maze Solutions: An SMT-Based Construction}
 
 \author{Shengyi Wang
@@ -45,16 +48,16 @@
 
 \begin{abstract}
 
-  We present an SMT-based method to synthesize maze solution paths that
-  follow a given input pattern, such as text or shapes. The problem is
-  encoded as global constraints on adjacency, continuity, and pattern
-  alignment, allowing a solver to find a valid solution path in one
-  run. The solution path is either a planar, self-avoiding route or a
-  layered weaving interpretable without conflict in its topology, and
-  this path then serves as a scaffold for generating both ordinary and
-  interwoven maze structures. Our approach separates solution path
-  construction from maze generation, providing a general pipeline from
-  input pattern to expressive maze puzzles.
+  We present an SMT-based method to synthesize maze solution paths
+  that follow a given input pattern, such as text or shapes. The
+  problem is encoded as global constraints on adjacency, continuity,
+  and pattern-constrained coverage, allowing a solver to find a valid
+  solution path in one run. The solution path is either a planar,
+  self-avoiding route or a layered traversal interpretable without
+  conflict in its topology, and this path then serves as a scaffold
+  for generating both ordinary and woven maze structures. Our approach
+  separates solution path construction from maze generation, providing
+  a general pipeline from input pattern to expressive maze puzzles.
 
 \end{abstract}
 
@@ -99,14 +102,14 @@ planar and woven mazes (with and without highlighted solutions).
 \end{figure}
 
 The construction of the mazes considered in this paper can be viewed
-as a three-step process, as shown in
-Figure~\ref{fig:pipeline}. First, a given text or image is converted
-into a set of grid points. Second, a path is constructed on this grid,
-starting from a prescribed entry point and ending at a prescribed exit
-point, while traversing as many target grid points as
-possible. Depending on the intended maze type, this path may be
-required to be planar or may admit layered crossings. Third, a maze is
-generated from the resulting path.
+as a three-step process, as shown in Figure~\ref{fig:pipeline}. First,
+a given text or image is converted into a set of grid
+positions. Second, a path is constructed on this grid, starting from a
+prescribed entry position and ending at a prescribed exit position,
+while traversing as many target grid positions as possible. Depending
+on the intended maze type, this path may be required to be planar or
+may admit layered crossings. Third, a maze is generated from the
+resulting path.
 
 \begin{figure}[h!tbp]
   \centering
@@ -117,8 +120,8 @@ generated from the resulting path.
 
 Among these steps, the first is straightforward and can be handled
 using existing image processing tools, such as rasterization followed
-by binary thresholding to extract a target set of grid points from the
-input pattern. The third step has been extensively studied in the
+by binary thresholding to extract a target set of grid positions from
+the input pattern. The third step has been extensively studied in the
 literature, for example in~\cite{Buck2015MazesForProgrammers}. From a
 graph-theoretic perspective, maze generation amounts to constructing a
 spanning tree of an underlying grid graph. Planar mazes correspond to
@@ -139,31 +142,32 @@ structural constraints while remaining faithful to the input pattern.
 
 We first consider the planar setting shown in Figures~\ref{fig:1a}
 and~\ref{fig:1b}, where the maze solution is an orthogonal,
-self-avoiding path on a grid. Given a set of grid points derived from
-an input pattern, the task is to construct a path from a prescribed
-entry point to a prescribed exit point that visits as many of these
-points as possible.
+self-avoiding path on a grid. Given a set of grid positions derived
+from an input pattern, the task is to construct a path from a
+prescribed entry position to a prescribed exit position that visits as
+many of these positions as possible.
 
 A natural first comparison is with the Traveling Salesman Problem
 (TSP), an NP-complete problem~\cite{Papadimitriou1977EuclidTSP}. In
 its classical formulation, TSP seeks a shortest path visiting a given
-set of points, and such shortest solutions typically avoid
+set of positions, and such shortest solutions typically avoid
 self-intersections. This makes it tempting to apply existing TSP
 solvers to the present setting~\cite{Cook2012InPursuit}. In an ideal
-case, if a path visits \(n\) grid points by successive moves between
-adjacent points, its total length is exactly \(n-1\). Any diagonal
-segment would have length \(\sqrt{2}>1\) and therefore cannot appear
-in a truly optimal solution when a unit-length step between
-neighboring grid points is available.
+case, if a path visits \(n\) grid positions by successive moves
+between adjacent positions, its total length is exactly \(n-1\). Any
+diagonal segment would have length \(\sqrt{2}>1\) and therefore cannot
+appear in a truly optimal solution when a unit-length step between
+neighboring grid positions is available.
 
 In practice, however, this ideal behavior cannot be relied upon for
-two reasons. First, the set of grid points induced by an input pattern
-may not admit a path that achieves the \(n-1\) bound, so even an
-optimal solution may necessarily include longer connections. Second,
-on large instances, practical solvers may return non-optimal paths, in
-which diagonal shortcuts appear. In both cases, the resulting
-solutions violate the intended orthogonal, grid-following structure
-and tend to require substantial ad hoc post-processing.
+two reasons. First, the set of grid positions induced by an input
+pattern may not admit a path that achieves the \(n-1\) bound, so even
+an optimal solution may necessarily include longer
+connections. Second, on large instances, practical solvers may return
+non-optimal paths, in which diagonal shortcuts appear. In both cases,
+the resulting solutions violate the intended orthogonal,
+grid-following structure and tend to require substantial ad hoc
+post-processing.
 
 From a graph-theoretic perspective, the problem is more accurately
 described as a Hamiltonian path problem on a grid graph, rather than a
@@ -178,7 +182,7 @@ prevent sub-cycles within a propositional
 formula~\cite{Zhou2019EfficientSAT}. They already require nontrivial
 global connectivity constraints in the decision setting. Extending
 such encodings to optimization variants, such as finding a longest
-simple path that maximizes coverage of target grid points, further
+simple path that maximizes coverage of target grid positions, further
 increases their complexity.
 
 An alternative line of work is suggested by tile-based methods for
@@ -212,24 +216,24 @@ the layered one by disallowing crossing tiles.
 \section*{SMT Encoding}
 
 Before describing the constraint encoding, we first formalize the
-underlying path construction problem. Let \(P \subset \mathbb{Z}^2\)
-be a finite set of integer grid points, obtained by rasterizing a
-given input pattern and selecting the grid points corresponding to
-foreground pixels. Two points \((x,y),(x',y') \in \mathbb{Z}^2\) are
-said to be adjacent if and only if \(|x-x'|+|y-y'|=1\). Given two
-designated points \(s,t \in P\), the objective is to find an
-orthogonal path
+underlying path construction problem. Let \(P \subset \mathbb{N}^2\)
+be the finite set of grid positions \((r,c)\) (row/column indices)
+obtained by rasterizing the input pattern and retaining the positions
+corresponding to foreground pixels. Two positions \((r,c),(r',c') \in
+\mathbb{N}^2\) are said to be adjacent if and only if
+\(|r-r'|+|c-c'|=1\). Given two designated positions \(s,t \in P\), the
+objective is to find an orthogonal path
 \[
 s = a_0, a_1, \ldots, a_n = t,
 \]
-where each \(a_i \in P\), consecutive points are adjacent. Grid points
-are visited at most once in the planar setting and at most twice in
-the layered setting. Among all such paths, we seek one that maximizes
-the number of visited points, i.e., the length \(n\).
+where each \(a_i \in P\), consecutive positions are adjacent. Grid
+positions are visited at most once in the planar setting and at most
+twice in the layered setting. Among all such paths, we seek one that
+maximizes the number of visited positions, i.e., the length \(n\).
 
 To encode this path construction problem, we first represent paths
-using a tile-based formulation. Each grid point is associated with a
-tile specifying a local path connectivity pattern. The tile types
+using a tile-based formulation. Each grid position is associated with
+a tile specifying a local path connectivity pattern. The tile types
 shown in Figure~\ref{fig:tiles} serve as the basic primitives of this
 representation. Under this formulation, the existence of a valid path
 is reduced to the problem of placing tiles so that local connectivity
@@ -243,7 +247,7 @@ constraints are satisfied and global path structure emerges.
 \end{figure}
 
 We then encode the resulting tile placement problem in the
-quantifier-free theory of linear integer arithmetic (QF\_LIA), a
+quantifier-free theory of linear integer arithmetic (\QFLIA), a
 fragment of Satisfiability Modulo Theories (SMT) that permits
 reasoning about Boolean conditions together with integer linear
 constraints. In this encoding, Boolean variables represent adjacency
@@ -252,7 +256,7 @@ constraints enforce global properties such as connectivity, degree,
 and coverage. A single call to an SMT solver then decides the
 existence of a valid path satisfying all constraints.
 
-For each grid cell \((r,c) \in P\), we introduce an integer-valued
+For each grid position \((r,c) \in P\), we introduce an integer-valued
 tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
 of the tile types shown in Figure~\ref{fig:tiles}. Local connectivity
 semantics are specified by a collection of auxiliary functions on tile
@@ -293,8 +297,8 @@ These definitions can be directly encoded in SMT-LIB format. For example:
 
 Using the indicator function \(\mathrm{nonWhite}\) defined
 in~\eqref{eq:tile-defs}, we measure the length of a candidate path by
-the total number of grid cells that participate in it. Concretely, we
-define the coverage value
+the total number of grid positions that participate in it. Concretely,
+we define the coverage value
 \begin{equation}
 \label{eq:coverage}
 C = \sum_{(r,c)\in P} \mathrm{nonWhite}(t_{r,c}).
@@ -314,30 +318,28 @@ direct maximization objective.
 Local connectivity constraints enforce consistency between neighboring
 tiles and regulate how the path interacts with the boundary of the
 grid. We first impose adjacency consistency, and then handle boundary
-behavior, distinguishing general boundary cells from the designated
-entry and exit.
+behavior, distinguishing general boundary positions from the
+designated entry and exit.
 
-For any two horizontally adjacent grid cells \((r,c)\) and
+For any two horizontally adjacent grid positions \((r,c)\) and
 \((r,c+1)\), a path segment exiting to the right of \((r,c)\) must
 enter from the left of \((r,c+1)\). An analogous condition holds for
-vertical adjacency. Formally, for all adjacent pairs of grid cells
+vertical adjacency. Formally, for all adjacent pairs of grid positions
 within the domain, we require
-\begin{equation}
-\label{eq:adjacency}
+\[
 \begin{aligned}
 \mathrm{hasRight}(t_{r,c}) &\;\Longleftrightarrow\;
 \mathrm{hasLeft}(t_{r,c+1}), \\
 \mathrm{hasDown}(t_{r,c}) &\;\Longleftrightarrow\;
 \mathrm{hasUp}(t_{r+1,c}).
 \end{aligned}
-\end{equation}
+\]
 
 At the boundary of the grid, path segments are not allowed to exit the
 domain. Let the grid have width \(W\) and height \(H\). For any
-boundary cell \((r,c)\) other than the designated entry and exit
-cells, we impose
-\begin{equation}
-\label{eq:boundary}
+boundary position \((r,c)\) other than the designated entry and exit
+positions, we impose
+\[
 \begin{aligned}
 (r,c)\notin\{s,t\},\ c = 0
 &\;\Rightarrow\; \neg \mathrm{hasLeft}(t_{r,c}), \\
@@ -348,24 +350,23 @@ cells, we impose
 (r,c)\notin\{s,t\},\ r = H-1
 &\;\Rightarrow\; \neg \mathrm{hasDown}(t_{r,c}).
 \end{aligned}
-\end{equation}
+\]
 
-The designated entry and exit cells \(s=(r_s,c_s)\) and
+The designated entry and exit positions \(s=(r_s,c_s)\) and
 \(t=(r_t,c_t)\) are assumed to lie on the boundary and are treated as
 explicit exceptions to the boundary constraints. To ensure a single
 connection to the exterior, the tile type at each endpoint is fixed
 according to its boundary location: if an endpoint lies on the left or
 right boundary, a horizontal tile is enforced; if it lies on the top
 or bottom boundary, a vertical tile is enforced. Concretely, we impose
-\begin{equation}
-\label{eq:endpoints}
+\[
 \begin{aligned}
 c_s \in \{0,W-1\} &\;\Rightarrow\; t_{r_s,c_s} = 6, &
 r_s \in \{0,H-1\} &\;\Rightarrow\; t_{r_s,c_s} = 5, \\
 c_t \in \{0,W-1\} &\;\Rightarrow\; t_{r_t,c_t} = 6, &
 r_t \in \{0,H-1\} &\;\Rightarrow\; t_{r_t,c_t} = 5,
 \end{aligned}
-\end{equation}
+\]
 where tile types \(5\) and \(6\) correspond to vertical and horizontal
 path segments, respectively.
 
@@ -430,7 +431,7 @@ relation together with a strictly decreasing rank. We write
 \(\mathrm{nonWhite}(t_{r,c})=1\) to indicate that the tile at position
 \((r,c)\) is not empty and thus participates in the path.
 
-For each tile position \((r,c)\) we introduce an integer rank variable
+For each grid position \((r,c)\) we introduce an integer rank variable
 \(\rho_{r,c}\) and four Boolean parent-choice variables
 \(p^{R}_{r,c},p^{L}_{r,c},p^{U}_{r,c},p^{D}_{r,c}\). For example,
 \(p^{R}_{r,c}\) means that position \((r,c)\) selects its right
@@ -483,7 +484,7 @@ strict rank decrease around the cycle).
 
 For simple, non-branching path segments, the combined local adjacency
 and global parent--rank constraints behave as expected. However, in
-the presence of crossing tiles, the assumption that each tile position
+the presence of crossing tiles, the assumption that each grid position
 corresponds to a single path position breaks down. Figure~\ref{fig:nb}
 shows a representative solution produced under this scheme, which can
 satisfy the parent--rank constraints, as illustrated by the rank
@@ -507,66 +508,68 @@ base path element.
 Formally, we define activation predicates by
 \[
 \begin{aligned}
-A^{\mathsf{base}}_{r,c}
+A^{\kind{base}}_{r,c}
 &= \bigl(\mathrm{nonWhite}(t_{r,c})=1\bigr)\wedge (t_{r,c}\neq 7),
 \\
-A^{h}_{r,c}
+A^{\kind{h}}_{r,c}
 &= (t_{r,c}=7),
 \qquad
-A^{v}_{r,c}
+A^{\kind{v}}_{r,c}
 = (t_{r,c}=7).
 \end{aligned}
 \]
-Thus a crossing activates two elements (\(h\) and \(v\)), while a
-non-crossing, non-empty tile activates exactly one base element in the
-connectivity model.
+Thus a crossing activates two elements \(\kind{h}\) and \(\kind{v}\),
+while a non-crossing, non-empty tile activates exactly one element
+\(\kind{base}\) in the connectivity model.
 
-For each kind \(k\in\{\mathsf{base},h,v\}\) we introduce an integer
-rank \(\rho^{k}_{r,c}\) and directional parent-choice Booleans
+For each kind \(k\in\{\kind{base},\kind{h},\kind{v}\}\) we introduce
+an integer rank \(\rho^{k}_{r,c}\) and directional parent choice
+Booleans
 \(p^{R,k}_{r,c},p^{L,k}_{r,c},p^{U,k}_{r,c},p^{D,k}_{r,c}\). The
 global parent--rank constraints introduced in
 Equation~\eqref{eq:parent} are now instantiated separately for each
 virtual element \(k\), guarded by the corresponding activation
-predicate \(A^{k}_{r,c}\). For the split elements \(h\) and \(v\),
-parent choices in unsupported directions are explicitly disallowed
-(e.g., \(p^{R,v}_{r,c}\) and \(p^{L,v}_{r,c}\) are constrained to be
-false), ensuring that each element participates in the path only along
-its admissible directions. Concretely, for any active non-root
-element, the requirement of selecting a parent direction and having a
-positive rank is enforced per element:
-\begin{equation}
-\label{eq:split-parent}
+predicate \(A^{k}_{r,c}\). For the split elements \(\kind{h}\) and
+\(\kind{v}\), parent choices in unsupported directions are explicitly
+disallowed (e.g., \(p^{R,\kind{v}}_{r,c}\) and
+\(p^{L,\kind{v}}_{r,c}\) are constrained to be false), ensuring that
+each element participates in the path only along its admissible
+directions. Concretely, for any active non-root element, the
+requirement of selecting a parent direction and having a positive rank
+is enforced per element:
+\[
 A^{k}_{r,c}\wedge (r,c)\neq (r_s,c_s)\;\Rightarrow\;
 \Bigl(\bigvee_{d\in\{R,L,U,D\}} p^{d,k}_{r,c}\Bigr)
 \;\wedge\; 1\le \rho^{k}_{r,c}\le |P|.
-\end{equation}
+\]
 Since each grid position admits up to three such elements
-(\(k\in\{\text{base},h,v\}\)), this instantiation results in three
-parallel instances of the parent--rank constraints at each
-position. As in the non-crossing case, at the root \(s=(r_s,c_s)\) we
-impose \(\rho^{k}_{r_s,c_s}=0\) whenever \(A^{k}_{r_s,c_s}\) holds and
-forbid all parent choices.
+(\(k\in\{\kind{base},\kind{h},\kind{v}\}\)), this instantiation
+results in three parallel instances of the parent--rank constraints at
+each position. As in the non-crossing case, at the root
+\(s=(r_s,c_s)\) we impose \(\rho^{k}_{r_s,c_s}=0\) whenever
+\(A^{k}_{r_s,c_s}\) holds and forbid all parent choices.
 
-Since \(A^{h}_{r,c}=A^{v}_{r,c}=(t_{r,c}=7)\), a crossing tile
-simultaneously activates both virtual elements, and all subsequent
-parent--rank constraints apply to \(h\) and \(v\) in tandem.
+Since \(A^{\kind{h}}_{r,c}=A^{\kind{v}}_{r,c}=(t_{r,c}=7)\), a
+crossing tile simultaneously activates both virtual elements, and all
+subsequent parent--rank constraints apply to \(\kind{h}\) and
+\(\kind{v}\) in tandem.
 
 Directional feasibility constraints are extended in the minimal way: a
 chosen parent direction must follow an existing local edge, match the
 neighboring edge, and decrease rank, but the neighbor rank may belong
-either to \(\mathsf{base}\) (if the neighbor is non-crossing) or to the
+either to \(\kind{base}\) (if the neighbor is non-crossing) or to the
 corresponding crossing kind (if the neighbor is also a crossing). For
 example,
 \[
-p^{R,h}_{r,c}\;\Rightarrow\;
-\bigl(A^{h}_{r,c}\wedge \mathrm{hasRight}(t_{r,c})\bigr)
+p^{R,\kind{h}}_{r,c}\;\Rightarrow\;
+\bigl(A^{\kind{h}}_{r,c}\wedge \mathrm{hasRight}(t_{r,c})\bigr)
 \wedge
 \mathrm{hasLeft}(t_{r,c+1})
 \wedge
 \Bigl(
-A^{\mathsf{base}}_{r,c+1}\wedge \rho^{\mathsf{base}}_{r,c+1}<\rho^{h}_{r,c}
+A^{\kind{base}}_{r,c+1}\wedge \rho^{\kind{base}}_{r,c+1}<\rho^{\kind{h}}_{r,c}
 \;\vee\;
-A^{h}_{r,c+1}\wedge \rho^{h}_{r,c+1}<\rho^{h}_{r,c}
+A^{\kind{h}}_{r,c+1}\wedge \rho^{\kind{h}}_{r,c+1}<\rho^{\kind{h}}_{r,c}
 \Bigr).
 \]
 In the SMT encoding, this implication expands into a disjunction over
@@ -585,16 +588,16 @@ the possible kinds of the neighboring tile; for instance:
 
 Analogous implications are added for the other directions, with the
 neighbor kind chosen according to the move direction (horizontal uses
-\(\mathsf{base}/h\), vertical uses \(\mathsf{base}/v\)).
+\(\kind{base}/\kind{h}\), vertical uses \(\kind{base}/\kind{v}\)).
 
 Note that the coverage definition~\eqref{eq:coverage} remains
 unchanged, as it is expressed solely in terms of the tile variables
 \(t_{r,c}\) and \(\mathrm{nonWhite}(t_{r,c})\). A crossing still
-contributes a single occupied grid cell, independent of its virtual
-\(h/v\) split, so the same coverage constraint (or objective) applies
-verbatim. When crossing tiles are forbidden, the corresponding
-activation predicates are false, and the encoding degenerates
-naturally to the planar parent--rank formulation.
+contributes a single occupied grid position, independent of its
+virtual \(\kind{h}/\kind{v}\) split, so the same coverage constraint
+(or objective) applies verbatim. When crossing tiles are forbidden,
+the corresponding activation predicates are false, and the encoding
+degenerates naturally to the planar parent--rank formulation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Illustrative Example}
@@ -618,19 +621,18 @@ and does not affect the core connectivity model.
 %%%%%%%%%%%%%
 \section*{Summary and Conclusions}
 
-We studied the synthesis of long single-stroke maze solution paths
-that follow a given rasterized pattern on a grid, under either planar
-or layered (woven) traversal rules. The problem is modeled with a
-small set of local connectivity tiles and encoded in QF\_LIA,
-combining local adjacency constraints with a global parent--rank
-scheme to enforce a single connected structure. To handle crossings in
-the layered setting, a crossing tile is treated as two co-located
-virtual path elements so that the same connectivity machinery applies
-without iterative loop-elimination or post-processing. The coverage
-measure counts non-empty tiles and is unchanged by this refinement,
-and the planar case is obtained by simply forbidding crossings. The
-resulting encoding provides a uniform, declarative pipeline from
-visual patterns to planar or woven maze puzzles.
+We investigated the synthesis of long single-stroke maze solution
+paths that trace a prescribed rasterized pattern on a grid, under both
+planar and layered (woven) traversal rules. By formulating the problem
+as a finite constraint satisfaction task, we showed that local
+geometric rules and global connectivity requirements can be expressed
+in a uniform, declarative manner and solved automatically by an SMT
+solver.  This approach supports both planar and woven mazes within the
+same modeling framework, without iterative refinement or
+post-processing, and produces dense, visually structured solutions
+directly from the input pattern. The results illustrate how
+constraint-based reasoning can serve as an effective bridge between
+visual design and algorithmic path synthesis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Acknowledgements}
