@@ -335,19 +335,20 @@ within the domain, we require
 \end{aligned}
 \]
 
-At the boundary of the grid, path segments are not allowed to exit the
-domain. Let the grid have width \(W\) and height \(H\). For any
-boundary position \((r,c)\) other than the designated entry and exit
-positions, we impose
+At the boundary of the induced domain \(P\), path segments are not
+allowed to leave \(P\): whenever a neighboring position is absent from
+\(P\), that direction must be disabled. For any position \((r,c)\in
+P\) other than the designated entry and exit positions, we impose the
+following boundary-closure constraints:
 \[
 \begin{aligned}
-(r,c)\notin\{s,t\},\ c = 0
+(r,c)\notin\{s,t\},\ (r,c-1)\notin P
 &\;\Rightarrow\; \neg \mathrm{hasLeft}(t_{r,c}), \\
-(r,c)\notin\{s,t\},\ c = W-1
+(r,c)\notin\{s,t\},\ (r,c+1)\notin P
 &\;\Rightarrow\; \neg \mathrm{hasRight}(t_{r,c}), \\
-(r,c)\notin\{s,t\},\ r = 0
+(r,c)\notin\{s,t\},\ (r-1,c)\notin P
 &\;\Rightarrow\; \neg \mathrm{hasUp}(t_{r,c}), \\
-(r,c)\notin\{s,t\},\ r = H-1
+(r,c)\notin\{s,t\},\ (r+1,c)\notin P
 &\;\Rightarrow\; \neg \mathrm{hasDown}(t_{r,c}).
 \end{aligned}
 \]
@@ -361,10 +362,14 @@ right boundary, a horizontal tile is enforced; if it lies on the top
 or bottom boundary, a vertical tile is enforced. Concretely, we impose
 \[
 \begin{aligned}
-c_s \in \{0,W-1\} &\;\Rightarrow\; t_{r_s,c_s} = 6, &
-r_s \in \{0,H-1\} &\;\Rightarrow\; t_{r_s,c_s} = 5, \\
-c_t \in \{0,W-1\} &\;\Rightarrow\; t_{r_t,c_t} = 6, &
-r_t \in \{0,H-1\} &\;\Rightarrow\; t_{r_t,c_t} = 5,
+(r_s,c_s-1)\notin P \ \vee\ (r_s,c_s+1)\notin P
+&\;\Rightarrow\; t_{r_s,c_s}=6, &
+(r_s-1,c_s)\notin P \ \vee\ (r_s+1,c_s)\notin P
+&\;\Rightarrow\; t_{r_s,c_s}=5, \\
+(r_t,c_t-1)\notin P \ \vee\ (r_t,c_t+1)\notin P
+&\;\Rightarrow\; t_{r_t,c_t}=6, &
+(r_t-1,c_t)\notin P \ \vee\ (r_t+1,c_t)\notin P
+&\;\Rightarrow\; t_{r_t,c_t}=5.
 \end{aligned}
 \]
 where tile types \(5\) and \(6\) correspond to vertical and horizontal
