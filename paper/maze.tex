@@ -373,7 +373,10 @@ or bottom boundary, a vertical tile is enforced. Concretely, we impose
 \end{aligned}
 \]
 where tile types \(5\) and \(6\) correspond to vertical and horizontal
-path segments, respectively.
+path segments, respectively. If an endpoint happens to lack both a
+horizontal and a vertical neighbor in \(P\), we break the tie by
+prioritizing the horizontal direction, i.e., we fix the endpoint tile
+to be horizontal.
 
 The above constraints translate directly into SMT-LIB assertions. Here
 are a few representative examples:
