@@ -34,6 +34,8 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
     else
       pure minBound?
   let smt := OptMaze.bitMatrixSmt2 m minBoundFinal allowCross
+  let constraintCount := OptMaze.countSmtAssertions smt
+  IO.println s!"constraints: {constraintCount}"
   IO.FS.writeFile smtPath smt
   IO.println s!"SMT2 written to {smtPath}"
 

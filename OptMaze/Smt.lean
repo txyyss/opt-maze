@@ -292,6 +292,13 @@ def bitMatrixSmt2 (m : BitMatrix) (minNonWhite? : Option Nat := none) (allowCros
     lines := lines.push "(get-model)"
     String.intercalate "\n" lines.toList
 
+/-- Count the number of SMT assertions in a generated SMT-LIB string. -/
+def countSmtAssertions (contents : String) : Nat :=
+  (contents.splitOn "\n").foldl
+    (fun acc line =>
+      if (line.trimAscii.toString).startsWith "(assert " then acc + 1 else acc)
+    0
+
 /-- A single tile assignment decoded from an SMT solver model. -/
 structure TileAssignment where
   row : Nat
