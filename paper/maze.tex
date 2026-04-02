@@ -30,8 +30,7 @@
 \title{From Patterns to Maze Solutions: An SMT-Based Construction}
 
 \author{Shengyi Wang
-  \vspace{10pt}\\
-  Shanghai Qi Zhi Institute; wangshengyi@sqz.ac.cn} % end \author
+  \vspace{10pt}\\Shanghai Qi Zhi Institute; Shanghai, China; wangshengyi@sqz.ac.cn} % end \author
 % superscripts are only needed if there is more than one author
 
 % \date{[Draft as of \today]} % uncomment to use for your own draft purposes
@@ -48,16 +47,17 @@
 
 \begin{abstract}
 
-  We present an SMT-based method to synthesize maze solution paths
-  that follow a given input pattern, such as text or shapes. The
-  problem is encoded as global constraints on adjacency, continuity,
-  and pattern-constrained coverage, allowing a solver to find a valid
-  solution path in one run. The solution path is either a planar,
-  self-avoiding route or a layered traversal interpretable without
-  conflict in its topology, and this path then serves as a scaffold
-  for generating both ordinary and woven maze structures. Our approach
-  separates solution path construction from maze generation, providing
-  a general pipeline from input pattern to expressive maze puzzles.
+  We present a method based on Satisfiability Modulo Theories to
+  synthesize maze solution paths that follow a given input pattern,
+  such as text or shapes. The problem is encoded as global constraints
+  on adjacency, continuity, and pattern-constrained coverage, allowing
+  a solver to find a valid solution path in one run. The solution path
+  is either a planar, self-avoiding route or a layered traversal
+  interpretable without conflict in its topology, and this path then
+  serves as a scaffold for generating both ordinary and woven maze
+  structures. Our approach separates solution path construction from
+  maze generation, providing a general pipeline from input pattern to
+  expressive maze puzzles.
 
 \end{abstract}
 
@@ -198,10 +198,11 @@ and re-solving the model.
 In our work, we adopt the same tile-based representation of local path
 fragments, but instead of formulating the overall problem as an
 integer program, we cast the global connectivity and pattern coverage
-constraints in an SMT encoding tailored to maze paths. Modern SMT
-solvers provide a natural framework for expressing both propositional
-structure and integer constraints, allowing the existence of a valid
-path to be decided in a single solver call.
+constraints in a Satisfiability Modulo Theories (SMT) encoding
+tailored to maze paths. Modern SMT solvers provide a natural framework
+for expressing both propositional structure and integer constraints,
+allowing the existence of a valid path to be decided in a single
+solver call.
 
 One major advantage of the tile-based representation is its ability to
 express structurally distinct path types within a single unified
@@ -248,13 +249,12 @@ constraints are satisfied and global path structure emerges.
 
 We then encode the resulting tile placement problem in the
 quantifier-free theory of linear integer arithmetic (\QFLIA), a
-fragment of Satisfiability Modulo Theories (SMT) that permits
-reasoning about Boolean conditions together with integer linear
-constraints. In this encoding, Boolean variables represent adjacency
-and ordering decisions induced by tile connectivity, while integer
-constraints enforce global properties such as connectivity, degree,
-and coverage. A single call to an SMT solver then decides the
-existence of a valid path satisfying all constraints.
+fragment of SMT that permits reasoning about Boolean conditions
+together with integer linear constraints. In this encoding, Boolean
+variables represent adjacency and ordering decisions induced by tile
+connectivity, while integer constraints enforce global properties such
+as connectivity, degree, and coverage. A single call to an SMT solver
+then decides the existence of a valid path satisfying all constraints.
 
 For each grid position \((r,c) \in P\), we introduce an integer-valued
 tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
@@ -656,8 +656,42 @@ author.
 
 {\setlength{\baselineskip}{13pt}
   \raggedright
-  \bibliographystyle{bridges}
-  \bibliography{maze}
+
+\begin{thebibliography}{9}
+
+\bibitem{BoschSnyder2023TileBasedSingleLine}
+R. Bosch and I. Snyder. ``A New Tile-Based Method for Constructing Single-Line Drawings.''
+\textit{Bridges Conference Proceedings}, Phoenix, Arizona, July 27--30, 2023, pp. 37--44.
+\url{https://archive.bridgesmathart.org/2023/bridges2023-37.html}
+
+\bibitem{Buck2015MazesForProgrammers}
+J. Buck. \textit{Mazes for Programmers: Code Your Own Twisty Little Passages}. Pragmatic Bookshelf, 2015.
+
+\bibitem{Cook2012InPursuit}
+W. J. Cook. \textit{In Pursuit of the Traveling Salesman: Mathematics at the Limits of Computation}.
+Princeton University Press, 2012.
+
+\bibitem{GareyJohnson1979}
+M. R. Garey and D. S. Johnson. \textit{Computers and Intractability: A Guide to the Theory of
+NP-Completeness}, 1st ed. W. H. Freeman and Company, 1979.
+
+\bibitem{hamiltonGrid}
+A. Itai, C. H. Papadimitriou, and J. L. Szwarcfiter. ``Hamilton Paths in Grid Graphs.''
+\textit{SIAM Journal on Computing}, vol. 11, no. 4, 1982, pp. 676--686.
+\url{https://doi.org/10.1137/0211056}
+
+\bibitem{Papadimitriou1977EuclidTSP}
+C. H. Papadimitriou. ``The Euclidean Traveling Salesman Problem is NP-Complete.''
+\textit{Theoretical Computer Science}, vol. 4, no. 3, 1977, pp. 237--244.
+\url{https://www.sciencedirect.com/science/article/pii/0304397577900123}
+
+\bibitem{Zhou2019EfficientSAT}
+N.-F. Zhou. ``In Pursuit of an Efficient SAT Encoding for the Hamiltonian Cycle Problem.''
+\textit{International Conference on Principles and Practice of Constraint Programming (CP)},
+Lecture Notes in Computer Science, vol. 12176, Springer, 2019, pp. 585--602.
+
+\end{thebibliography}
+
 } % end setlength, raggedright
 
 \end{document}
