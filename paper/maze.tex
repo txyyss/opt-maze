@@ -442,15 +442,15 @@ relation together with a strictly decreasing rank. We write
 
 For each grid position \((r,c)\) we introduce an integer rank variable
 \(\rho_{r,c}\) and four Boolean parent-choice variables
-\(p^{R}_{r,c},p^{L}_{r,c},p^{U}_{r,c},p^{D}_{r,c}\). For example,
-\(p^{R}_{r,c}\) means that position \((r,c)\) selects its right
+\(p^\kind{R}_{r,c},p^\kind{L}_{r,c},p^\kind{U}_{r,c},p^\kind{D}_{r,c}\). For example,
+\(p^\kind{R}_{r,c}\) means that position \((r,c)\) selects its right
 neighbor as its predecessor. We fix the entry position \(s=(r_s,c_s)\)
 as the root. The root has rank \(0\) and no parent choice:
 \[
 \rho_{r_s,c_s}=0,
 \qquad
-\neg p^{R}_{r_s,c_s}\wedge \neg p^{L}_{r_s,c_s}\wedge
-\neg p^{U}_{r_s,c_s}\wedge \neg p^{D}_{r_s,c_s}.
+\neg p^\kind{R}_{r_s,c_s}\wedge \neg p^\kind{L}_{r_s,c_s}\wedge
+\neg p^\kind{U}_{r_s,c_s}\wedge \neg p^\kind{D}_{r_s,c_s}.
 \]
 All other non-empty tiles must have positive rank and choose at least
 one parent direction:
@@ -458,7 +458,7 @@ one parent direction:
 \label{eq:parent}
 \mathrm{nonWhite}(t_{r,c}) = 1 \wedge (r,c)\neq (r_s,c_s)
 \;\Rightarrow\;
-\bigl(p^{R}_{r,c}\vee p^{L}_{r,c}\vee p^{U}_{r,c}\vee p^{D}_{r,c}\bigr)
+\bigl(p^\kind{R}_{r,c}\vee p^\kind{L}_{r,c}\vee p^\kind{U}_{r,c}\vee p^\kind{D}_{r,c}\bigr)
 \;\wedge\; 1 \le \rho_{r,c}\le \vert P\rvert.
 \end{equation}
 
@@ -466,11 +466,11 @@ A parent choice must follow an existing local edge to a neighboring
 non-empty tile, with matching boundary predicates and strictly
 decreasing rank. For instance,
 \[
-p^{R}_{r,c}\;\Rightarrow\; \rho_{r,c+1}<\rho_{r,c} \wedge
+p^\kind{R}_{r,c}\;\Rightarrow\; \rho_{r,c+1}<\rho_{r,c} \wedge
 \mathrm{nonWhite}(t_{r,c}) = 1 \wedge \mathrm{nonWhite}(t_{r,c+1})=1
 \wedge \mathrm{hasRight}(t_{r,c}) \wedge \mathrm{hasLeft}(t_{r,c+1}) .
 \]
-The constraints for \(p^{L}_{r,c}, p^{U}_{r,c}, p^{D}_{r,c}\) are
+The constraints for \(p^\kind{L}_{r,c}, p^\kind{U}_{r,c}, p^\kind{D}_{r,c}\) are
 obtained by swapping the neighbor coordinates and the corresponding
 directional predicate pairs on the current and adjacent tiles.
 
@@ -534,21 +534,21 @@ while a non-crossing, non-empty tile activates exactly one element
 For each kind \(k\in\{\kind{base},\kind{h},\kind{v}\}\) we introduce
 an integer rank \(\rho^{k}_{r,c}\) and directional parent choice
 Booleans
-\(p^{R,k}_{r,c},p^{L,k}_{r,c},p^{U,k}_{r,c},p^{D,k}_{r,c}\). The
+\(p^{\kind{R},k}_{r,c},p^{\kind{L},k}_{r,c},p^{\kind{U},k}_{r,c},p^{\kind{D},k}_{r,c}\). The
 global parent--rank constraints introduced in
 Equation~\eqref{eq:parent} are now instantiated separately for each
 virtual element \(k\), guarded by the corresponding activation
 predicate \(A^{k}_{r,c}\). For the split elements \(\kind{h}\) and
 \(\kind{v}\), parent choices in unsupported directions are explicitly
-disallowed (e.g., \(p^{R,\kind{v}}_{r,c}\) and
-\(p^{L,\kind{v}}_{r,c}\) are constrained to be false), ensuring that
+disallowed (e.g., \(p^{\kind{R},\kind{v}}_{r,c}\) and
+\(p^{\kind{L},\kind{v}}_{r,c}\) are constrained to be false), ensuring that
 each element participates in the path only along its admissible
 directions. Concretely, for any active non-root element, the
 requirement of selecting a parent direction and having a positive rank
 is enforced per element:
 \[
 A^{k}_{r,c}\wedge (r,c)\neq (r_s,c_s)\;\Rightarrow\;
-\Bigl(\bigvee_{d\in\{R,L,U,D\}} p^{d,k}_{r,c}\Bigr)
+\Bigl(\bigvee_{d\in\{\kind{R},\kind{L},\kind{U},\kind{D}\}} p^{d,k}_{r,c}\Bigr)
 \;\wedge\; 1\le \rho^{k}_{r,c}\le |P|.
 \]
 Since each grid position admits up to three such elements
@@ -570,7 +570,7 @@ either to \(\kind{base}\) (if the neighbor is non-crossing) or to the
 corresponding crossing kind (if the neighbor is also a crossing). For
 example,
 \[
-p^{R,\kind{h}}_{r,c}\;\Rightarrow\;
+p^{\kind{R},\kind{h}}_{r,c}\;\Rightarrow\;
 \bigl(A^{\kind{h}}_{r,c}\wedge \mathrm{hasRight}(t_{r,c})\bigr)
 \wedge
 \mathrm{hasLeft}(t_{r,c+1})
