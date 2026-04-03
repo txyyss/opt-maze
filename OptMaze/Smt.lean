@@ -299,6 +299,13 @@ def countSmtAssertions (contents : String) : Nat :=
       if (line.trimAscii.toString).startsWith "(assert " then acc + 1 else acc)
     0
 
+/-- Count the number of declared SMT variables in a generated SMT-LIB string. -/
+def countSmtVariables (contents : String) : Nat :=
+  (contents.splitOn "\n").foldl
+    (fun acc line =>
+      if (line.trimAscii.toString).startsWith "(declare-const " then acc + 1 else acc)
+    0
+
 /-- A single tile assignment decoded from an SMT solver model. -/
 structure TileAssignment where
   row : Nat
