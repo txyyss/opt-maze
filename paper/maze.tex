@@ -130,12 +130,12 @@ viewed as variations in which crossings are interpreted through local
 topological layering.
 
 Given a prescribed solution path, maze generation reduces to a minor
-modification of these standard algorithms: the solution path simply
-induces a partially specified spanning tree that must be extended to a
-full one. We adopt such algorithms with minor implementation
-variations. The central technical challenge of this work lies in the
-second step---the construction of a suitable path satisfying global
-structural constraints while remaining faithful to the input pattern.
+modification of these standard algorithms: the solution path is fixed
+in advance, and the maze-generation procedure extends it to a spanning
+tree of the underlying grid graph. The central technical challenge of
+this work lies in the second step---finding a suitable path that
+satisfies global structural constraints while remaining faithful to
+the input pattern.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Problem Analysis}
@@ -287,7 +287,8 @@ variable \(t_{r,c}\) is declared as an integer constrained by
 &= t \in \{3,4,6,7\}.
 \end{aligned}
 \end{equation}
-These definitions can be directly encoded in SMT-LIB format. For example:
+These definitions can be encoded in SMT-LIB, a standard input language
+for SMT solvers \cite{SMTLIBStandard}. For example:
 \begin{tcolorbox}[smtsimple]
 \begin{verbatim}
 (define-fun hasUp ((t Int)) Bool (or (= t 1) (= t 4) (= t 5) (= t 7)))
@@ -684,6 +685,10 @@ A. Itai, C. H. Papadimitriou, and J. L. Szwarcfiter. ``Hamilton Paths in Grid Gr
 C. H. Papadimitriou. ``The Euclidean Traveling Salesman Problem is NP-Complete.''
 \textit{Theoretical Computer Science}, vol. 4, no. 3, 1977, pp. 237--244.
 \url{https://www.sciencedirect.com/science/article/pii/0304397577900123}
+
+\bibitem{SMTLIBStandard}
+C. Barrett, P. Fontaine, and C. Tinelli. \textit{The SMT-LIB Standard:
+  Version 2.7}. 2025. \url{https://smt-lib.org/papers/smt-lib-reference-v2.7-r2025-07-07.pdf}
 
 \bibitem{Zhou2019EfficientSAT}
 N.-F. Zhou. ``In Pursuit of an Efficient SAT Encoding for the Hamiltonian Cycle Problem.''
