@@ -38,11 +38,16 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
     let falseCount := OptMaze.countFalseCells m
     logLine s!"black cells: {falseCount}"
     let minBoundFinal ←
-      if minBound?.isNone && solver != "z3" then
-        logLine s!"{solver} does not support maximize; using {falseCount} as lower bound"
-        pure (some falseCount)
-      else
-        pure minBound?
+      match minBound? with
+      | some k =>
+          logLine s!"lower bound: {k}"
+          pure (some k)
+      | none =>
+          if solver != "z3" then
+            logLine s!"{solver} does not support maximize; using {falseCount} as lower bound"
+            pure (some falseCount)
+          else
+            pure none
     let smt := OptMaze.bitMatrixSmt2 m minBoundFinal allowCross
     let variableCount := OptMaze.countSmtVariables smt
     let constraintCount := OptMaze.countSmtAssertions smt
