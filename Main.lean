@@ -37,6 +37,7 @@ def runOptMaze (p : Parsed) : IO UInt32 := do
     let m ← readBitMatrix input
     let falseCount := OptMaze.countFalseCells m
     logLine s!"black cells: {falseCount}"
+    logLine s!"cross tiles: {if allowCross then "allowed" else "disabled"}"
     let minBoundFinal ←
       match minBound? with
       | some k =>
