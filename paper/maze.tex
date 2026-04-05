@@ -176,14 +176,10 @@ in general graphs~\cite{GareyJohnson1979}, and this hardness persists
 even for grid graphs~\cite{hamiltonGrid}, ruling out simple
 constructive or purely local solutions for arbitrary patterns.
 
-Various SAT encodings for Hamiltonian path and cycle problems have
-been studied, focusing on how to represent global connectivity and
-prevent sub-cycles within a propositional
-formula~\cite{Zhou2019EfficientSAT}. They already require nontrivial
-global connectivity constraints in the decision setting. Extending
-such encodings to optimization variants, such as finding a longest
-simple path that maximizes coverage of target grid positions, further
-increases their complexity.
+Existing SAT encodings for Hamiltonian path/cycle already require
+nontrivial global connectivity
+constraints~\cite{Zhou2019EfficientSAT}, and extending them to
+optimization variants is correspondingly more cumbersome.
 
 An alternative line of work is suggested by tile-based methods for
 constructing single-line drawings, such as the approach of Bosch and
@@ -379,15 +375,15 @@ horizontal and a vertical neighbor in \(P\), we break the tie by
 prioritizing the horizontal direction, i.e., we fix the endpoint tile
 to be horizontal.
 
-The above constraints translate directly into SMT-LIB assertions. Here
-are a few representative examples:
-\begin{tcolorbox}[smtsimple]
-\begin{verbatim}
-(assert (= tile_27_18 6))                             ; endpoint / boundary
-(assert (not (hasUp tile_16_1)))                      ; boundary no-exit
-(assert (= (hasRight tile_16_2) (hasLeft tile_16_3))) ; adjacency
-\end{verbatim}
-\end{tcolorbox}
+%% The above constraints translate directly into SMT-LIB assertions. Here
+%% are a few representative examples:
+%% \begin{tcolorbox}[smtsimple]
+%% \begin{verbatim}
+%% (assert (= tile_27_18 6))                             ; endpoint / boundary
+%% (assert (not (hasUp tile_16_1)))                      ; boundary no-exit
+%% (assert (= (hasRight tile_16_2) (hasLeft tile_16_3))) ; adjacency
+%% \end{verbatim}
+%% \end{tcolorbox}
 
 Together, these constraints ensure that all local path segments are
 pairwise compatible and that the path interacts with the boundary only
@@ -474,17 +470,17 @@ The constraints for \(p^\kind{L}_{r,c}, p^\kind{U}_{r,c}, p^\kind{D}_{r,c}\) are
 obtained by swapping the neighbor coordinates and the corresponding
 directional predicate pairs on the current and adjacent tiles.
 
-These constraints translate directly into SMT-LIB assertions, e.g.:
-\begin{tcolorbox}[smtsimple]
-\begin{verbatim}
-(assert (=> (= (nonWhite tile_13_2) 1)
-            (and (>= rank_13_2 1) (<= rank_13_2 507))))
-(assert (=> (= (nonWhite tile_13_2) 1) (or pR_13_2 pL_13_2 pD_13_2 pU_13_2)))
-(assert (=> pR_13_2 (and (< rank_13_3 rank_13_2)
-                         (= (nonWhite tile_13_2) 1) (= (nonWhite tile_13_3) 1)
-                         (hasRight tile_13_2) (hasLeft tile_13_3))))
-\end{verbatim}
-\end{tcolorbox}
+%% These constraints translate directly into SMT-LIB assertions, e.g.:
+%% \begin{tcolorbox}[smtsimple]
+%% \begin{verbatim}
+%% (assert (=> (= (nonWhite tile_13_2) 1)
+%%             (and (>= rank_13_2 1) (<= rank_13_2 507))))
+%% (assert (=> (= (nonWhite tile_13_2) 1) (or pR_13_2 pL_13_2 pD_13_2 pU_13_2)))
+%% (assert (=> pR_13_2 (and (< rank_13_3 rank_13_2)
+%%                          (= (nonWhite tile_13_2) 1) (= (nonWhite tile_13_3) 1)
+%%                          (hasRight tile_13_2) (hasLeft tile_13_3))))
+%% \end{verbatim}
+%% \end{tcolorbox}
 
 Together, these constraints ensure that every participating position
 (except the root) selects a locally valid predecessor of smaller rank,
@@ -630,27 +626,28 @@ and does not affect the core connectivity model.
   \label{fig:examples}
 \end{figure}
 
-Using OpenSMT on an M1 Max MacBook Pro, we also recorded the scale and
-runtime of several representative instances. For the smallest
-``$\infty$'' pattern ($|P|=202$) in Figure~\ref{fig:inf}, the crossing
-encoding uses 3232 variables and 5503 constraints and yields a
-full-coverage solution in about 1.1 seconds. For the larger instances
-``A'' ($|P|=447$) and ``rt'' ($|P|=421$) in Figure~\ref{fig:examples},
-the crossing versions use 7152/12315 and 6736/11585
-variables/constraints, respectively, and yield full-coverage solutions
-in about 4.8 minutes and 19.1 minutes. The corresponding non-crossing
-encodings are more restrictive: at the same target coverage they are
-often unsatisfiable, and satisfiability is recovered only after
-lowering the coverage bound, sometimes with substantially longer
-runtimes. In particular, the non-crossing ``$\infty$'' instance
-becomes satisfiable only at 195, and the non-crossing ``rt'' instance
-only at 418; for ``A'', lowering the bound from 447 to 440 yields a
-solution with coverage 441 after about 1 hour 54 minutes. In these
-examples, allowing crossings permits higher coverage and makes the
-instances easier to satisfy. Because the present OpenSMT runs use
-lower-bound satisfiability checks rather than a direct maximization
-objective, optimality for a given instance is certified by finding a
-satisfiable bound and proving all larger bounds unsatisfiable.
+Using OpenSMT~\cite{OpenSMT2} on an M1 Max MacBook Pro, we also
+recorded the scale and runtime of several representative
+instances. For the smallest ``$\infty$'' pattern ($|P|=202$) in
+Figure~\ref{fig:inf}, the crossing encoding uses 3232 variables and
+5503 constraints and yields a full-coverage solution in about 1.1
+seconds. For the larger instances ``A'' ($|P|=447$) and ``rt''
+($|P|=421$) in Figure~\ref{fig:examples}, the crossing versions use
+7152/12315 and 6736/11585 variables/constraints, respectively, and
+yield full-coverage solutions in about 4.8 minutes and 19.1
+minutes. The corresponding non-crossing encodings are more
+restrictive: at the same target coverage they are often unsatisfiable,
+and satisfiability is recovered only after lowering the coverage
+bound, sometimes with substantially longer runtimes. In particular,
+the non-crossing ``$\infty$'' instance becomes satisfiable only at
+195, and the non-crossing ``rt'' instance only at 418; for ``A'',
+lowering the bound from 447 to 440 yields a solution with coverage 441
+after about 1 hour 54 minutes. In these examples, allowing crossings
+permits higher coverage and makes the instances easier to
+satisfy. Because the present OpenSMT runs use lower-bound
+satisfiability checks rather than a direct maximization objective,
+optimality for a given instance is certified by finding a satisfiable
+bound and proving all larger bounds unsatisfiable.
 
 %%%%%%%%%%%%%
 \section*{Summary and Conclusions}
@@ -705,6 +702,13 @@ NP-Completeness}, 1st ed. W. H. Freeman and Company, 1979.
 A. Itai, C. H. Papadimitriou, and J. L. Szwarcfiter. ``Hamilton Paths in Grid Graphs.''
 \textit{SIAM Journal on Computing}, vol. 11, no. 4, 1982, pp. 676--686.
 \url{https://doi.org/10.1137/0211056}
+
+\bibitem{OpenSMT2}
+A. E. J. Hyv{\"a}rinen, M. Marescotti, L. Alt, and N. Sharygina.
+``OpenSMT2: An SMT Solver for Multi-Core and Cloud Computing.''
+\textit{Theory and Applications of Satisfiability Testing -- SAT 2016},
+pp. 547--553, 2016.
+\url{https://doi.org/10.1007/978-3-319-40970-2_35}
 
 \bibitem{Papadimitriou1977EuclidTSP}
 C. H. Papadimitriou. ``The Euclidean Traveling Salesman Problem is NP-Complete.''
