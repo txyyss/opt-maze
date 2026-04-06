@@ -250,7 +250,9 @@ together with integer linear constraints. In this encoding, Boolean
 variables represent adjacency and ordering decisions induced by tile
 connectivity, while integer constraints enforce global properties such
 as connectivity, degree, and coverage. A single call to an SMT solver
-then decides the existence of a valid path satisfying all constraints.
+then determines whether a valid path satisfying all constraints
+exists, returning a model when the instance is satisfiable and
+reporting unsatisfiability otherwise.
 
 For each grid position \((r,c) \in P\), we introduce an integer-valued
 tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
@@ -640,14 +642,14 @@ restrictive: at the same target coverage they are often unsatisfiable,
 and satisfiability is recovered only after lowering the coverage
 bound, sometimes with substantially longer runtimes. In particular,
 the non-crossing ``$\infty$'' instance becomes satisfiable only at
-195, and the non-crossing ``rt'' instance only at 418; for ``A'',
-lowering the bound from 447 to 440 yields a solution with coverage 441
-after about 1 hour 54 minutes. In these examples, allowing crossings
-permits higher coverage and makes the instances easier to
-satisfy. Because the present OpenSMT runs use lower-bound
-satisfiability checks rather than a direct maximization objective,
-optimality for a given instance is certified by finding a satisfiable
-bound and proving all larger bounds unsatisfiable.
+195, and the non-crossing ``rt'' instance only at 418; for ``A'', the
+non-crossing instance is unsatisfiable at 447 but satisfiable at 441
+in about 43.5 minutes. In these examples, allowing crossings permits
+higher coverage and makes the instances easier to satisfy. Because the
+present OpenSMT runs use lower-bound satisfiability checks rather than
+a direct maximization objective, optimality for a given instance is
+certified by finding a satisfiable bound and proving all larger bounds
+unsatisfiable.
 
 %%%%%%%%%%%%%
 \section*{Summary and Conclusions}
