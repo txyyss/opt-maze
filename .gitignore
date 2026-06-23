@@ -9,10 +9,13 @@
 /weavemaze
 /template
 /paper/figures/*.pdf
+/extended-report/figures/*.pdf
 *.aux
 *.bbl
 *.blg
+*.cut
 *.log
 /paper/maze.pdf
+/extended-report/maze-extended.pdf
 /paper/outline.txt
 *.nb
