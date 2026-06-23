@@ -28,8 +28,7 @@
 \newcommand{\QFLIA}{\texttt{QF\char`_ LIA}}
 \newcommand{\kind}[1]{\mathsf{#1}}
 
-\title{From Patterns to Maze Solutions: An SMT-Based Construction}
-\subtitle{Extended Technical Report}
+\title{From Patterns to Maze Structures: SMT-Based Path Synthesis and 2D/3D Construction}
 
 \author{Shengyi Wang}
 \affiliation{%
@@ -47,17 +46,18 @@
 
 \begin{abstract}
 
-  We present a method based on Satisfiability Modulo Theories to
-  synthesize maze solution paths that follow a given input pattern,
-  such as text or shapes. The problem is encoded as global constraints
+  We present a pipeline for constructing maze structures from input
+  patterns such as text or shapes. The central path-synthesis problem
+  is encoded in Satisfiability Modulo Theories as global constraints
   on adjacency, continuity, and pattern-constrained coverage, allowing
-  a solver to find a valid solution path in one run. The solution path
-  is either a planar, self-avoiding route or a layered traversal
-  interpretable without conflict in its topology, and this path then
-  serves as a scaffold for generating both ordinary and woven maze
-  structures. Our approach separates solution path construction from
-  maze generation, providing a general pipeline from input pattern to
-  expressive maze puzzles.
+  a solver to find a valid solution path in one run. The resulting path
+  is either a planar, self-avoiding route or a layered traversal with
+  prescribed over--under crossings, and it serves as a scaffold for
+  constructing planar, woven, and three-dimensional maze
+  realizations. This report extends the published Bridges 2026
+  conference paper by giving more representative SMT-LIB examples and
+  by expanding the construction details that connect synthesized paths
+  to concrete maze geometry.
 
 \end{abstract}
 
@@ -66,11 +66,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 
+This report extends the Bridges 2026 conference paper
+\cite{Wang2026PatternsMazeSolutions}, which introduced the SMT
+formulation for synthesizing maze solution paths from input patterns.
+The present version keeps that formulation but broadens the scope from
+path synthesis to maze construction. In particular, it gives more
+representative SMT-LIB fragments, describes how synthesized paths are
+completed into planar and woven maze structures, and develops the
+height information needed to realize layered crossings as
+three-dimensional maze geometry.
+
 We derive two distinct maze solution paths from the same input
 pattern: a planar path and a layered path with crossings. Each
-solution path then serves as a scaffold for maze
-construction. Figure~\ref{fig:inf} shows an example of the resulting
-planar and woven mazes (with and without highlighted solutions).
+solution path then serves as a scaffold for maze construction.
+Figure~\ref{fig:inf} shows an example of the resulting planar and
+woven mazes (with and without highlighted solutions).
 
 \begin{figure}[h!tbp]
   \centering
@@ -119,7 +129,7 @@ resulting path.
   \resizebox{0.96\linewidth}{!}{%
     \input{figures/pipeline.tex}%
   }
-  \caption{Three-step pipeline from an input pattern to a maze. This work focuses on Step~2.}
+  \caption{Three-step pipeline from an input pattern to a maze.}
   \Description{A left-to-right pipeline from input pattern to grid points to solution path to maze construction.}
   \label{fig:pipeline}
 \end{figure}

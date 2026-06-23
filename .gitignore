@@ -14,6 +14,8 @@
 *.bbl
 *.blg
 *.cut
+*.fdb_latexmk
+*.fls
 *.log
 /paper/maze.pdf
 /extended-report/maze-extended.pdf
