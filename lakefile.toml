@@ -12,4 +12,4 @@ root = "Main"
 [[require]]
 name = "lean4-cli"
 git = "https://github.com/leanprover/lean4-cli"
-rev = "v4.29.0"
+rev = "v4.31.0"
