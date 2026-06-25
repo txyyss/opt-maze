@@ -50,9 +50,9 @@
   patterns such as text or shapes. The central path-synthesis problem
   is encoded in Satisfiability Modulo Theories as global constraints
   on adjacency, continuity, and pattern-constrained coverage, allowing
-  a solver to find a valid solution path in one run. The resulting path
-  is either a planar, self-avoiding route or a layered traversal with
-  prescribed over--under crossings, and it serves as a scaffold for
+  each fixed-bound instance to be solved in one call. The resulting
+  path is either a planar, self-avoiding route or a layered traversal
+  with prescribed over--under crossings, and it serves as a scaffold for
   constructing planar, woven, and three-dimensional maze
   realizations. This report extends the published Bridges 2026
   conference paper by giving more representative SMT-LIB examples and
@@ -130,7 +130,7 @@ resulting path.
     \input{figures/pipeline.tex}%
   }
   \caption{Three-step pipeline from an input pattern to a maze.}
-  \Description{A left-to-right pipeline from input pattern to grid points to solution path to maze construction.}
+  \Description{A left-to-right pipeline from input pattern to grid positions to solution path to maze construction.}
   \label{fig:pipeline}
 \end{figure}
 
@@ -213,7 +213,7 @@ integer program, we cast the global connectivity and pattern coverage
 constraints in a Satisfiability Modulo Theories (SMT) encoding
 tailored to maze paths. Modern SMT solvers provide a natural framework
 for expressing both propositional structure and integer constraints,
-allowing the existence of a valid path to be decided in a single
+allowing each fixed-bound existence question to be decided in one
 solver call.
 
 One major advantage of the tile-based representation is its ability to
@@ -268,10 +268,10 @@ fragment of SMT that permits reasoning about Boolean conditions
 together with integer linear constraints. In this encoding, Boolean
 variables represent adjacency and ordering decisions induced by tile
 connectivity, while integer constraints enforce global properties such
-as connectivity, degree, and coverage. A single call to an SMT solver
-then determines whether a valid path satisfying all constraints
-exists, returning a model when the instance is satisfiable and
-reporting unsatisfiability otherwise.
+as connectivity, degree, and coverage. For a fixed coverage bound, one
+call to an SMT solver determines whether a valid path satisfying all
+constraints exists, returning a model when the instance is satisfiable
+and reporting unsatisfiability otherwise.
 
 For each grid position \((r,c) \in P\), we introduce an integer-valued
 tile variable \(t_{r,c} \in \{1,2,\dots,8\}\), whose value selects one
@@ -653,7 +653,7 @@ and does not affect the core connectivity model.
   \label{fig:examples}
 \end{figure}
 
-Using OpenSMT~\cite{OpenSMT2} on an M1 Max MacBook Pro, we also
+Using OpenSMT2~\cite{OpenSMT2} on an M1 Max MacBook Pro, we also
 recorded the scale and runtime of several representative
 instances. For the smallest ``$\infty$'' pattern ($|P|=202$) in
 Figure~\ref{fig:inf}, the crossing encoding uses 3232 variables and
@@ -671,7 +671,7 @@ the non-crossing ``$\infty$'' instance becomes satisfiable only at
 non-crossing instance is unsatisfiable at 447 but satisfiable at 441
 in about 43.5 minutes. In these examples, allowing crossings permits
 higher coverage and makes the instances easier to satisfy. Because the
-present OpenSMT runs use lower-bound satisfiability checks rather than
+present OpenSMT2 runs use lower-bound satisfiability checks rather than
 a direct maximization objective, optimality for a given instance is
 certified by finding a satisfiable bound and proving all larger bounds
 unsatisfiable.
