@@ -53,8 +53,8 @@
   each fixed-bound instance to be solved in one call. The resulting
   path is either a planar, self-avoiding route or a layered traversal
   with prescribed over--under crossings, and it serves as a scaffold for
-  constructing planar, woven, and three-dimensional maze
-  realizations. This report extends the published Bridges 2026
+  constructing planar mazes and three-dimensional realizations of woven
+  mazes. This report extends the published Bridges 2026
   conference paper by giving more representative SMT-LIB examples and
   by expanding the construction details that connect synthesized paths
   to concrete maze geometry.
@@ -137,21 +137,21 @@ resulting path.
 Among these steps, the first is straightforward and can be handled
 using existing image processing tools, such as rasterization followed
 by binary thresholding to extract a target set of grid positions from
-the input pattern. The third step has been extensively studied in the
-literature, for example in~\cite{Buck2015MazesForProgrammers}. From a
-graph-theoretic perspective, maze generation amounts to constructing a
-spanning tree of an underlying grid graph. Planar mazes correspond to
-spanning trees of rectangular grid graphs, while woven mazes can be
-viewed as variations in which crossings are interpreted through local
-topological layering.
+the input pattern. The conference version focused primarily on the
+second step: finding a suitable path that satisfies global structural
+constraints while remaining faithful to the input pattern. This report
+retains that formulation and develops the third step in greater
+detail, including both planar maze completion and a
+three-dimensional realization of layered crossings.
 
-Given a prescribed solution path, maze generation reduces to a minor
-modification of these standard algorithms: the solution path is fixed
-in advance, and the maze-generation procedure extends it to a spanning
-tree of the underlying grid graph. The central technical challenge of
-this work lies in the second step---finding a suitable path that
-satisfies global structural constraints while remaining faithful to
-the input pattern.
+The third step builds on standard maze-generation ideas, for example
+those surveyed in~\cite{Buck2015MazesForProgrammers}. From a
+graph-theoretic perspective, planar maze generation can be viewed as
+constructing a spanning tree of an underlying grid graph subject to
+the synthesized solution path. In the layered case, the crossing
+relation supplies additional topological information that must be
+turned into compatible height data before a three-dimensional maze
+geometry can be constructed.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem Analysis}
@@ -694,11 +694,10 @@ visual design and algorithmic path synthesis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{acks}
-AI tools were used to improve the clarity and readability of the
-manuscript, including rewording sentences and checking grammar and
-spelling. All modeling decisions, algorithmic designs, and technical
-results presented in this paper were developed and validated by the
-author.
+AI-assisted tools were used for language editing, exploratory
+technical discussion, and assistance with parts of the implementation.
+All mathematical claims, algorithms, and experimental results were
+independently examined and validated by the author.
 \end{acks}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
