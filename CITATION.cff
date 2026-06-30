@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the Bridges 2026 paper."
+title: "Opt Maze: SMT-Based Maze Path Synthesis"
+type: software
+authors:
+  - family-names: Wang
+    given-names: Shengyi
+year: 2026
+preferred-citation:
+  type: conference-paper
+  title: "From Patterns to Maze Solutions: An SMT-Based Construction"
+  authors:
+    - family-names: Wang
+      given-names: Shengyi
+  collection-title: "Proceedings of Bridges 2026: Mathematics and the Arts"
+  publisher: "Tessellations Publishing"
+  start: 37
+  end: 44
+  year: 2026
+  url: "https://archive.bridgesmathart.org/2026/bridges2026-37.html"
