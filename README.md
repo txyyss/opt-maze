@@ -13,8 +13,9 @@ files for the published conference paper and the extended technical
 report.
 
 Maze-construction code for turning synthesized paths into
-two-dimensional, three-dimensional, or interactive mazes is not
-included in this repository.
+two-dimensional, three-dimensional, or interactive mazes is maintained
+in the companion repository
+[txyyss/maze-construction](https://github.com/txyyss/maze-construction).
 
 ## Repository Layout
 
