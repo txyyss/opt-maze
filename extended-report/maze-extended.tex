@@ -696,8 +696,10 @@ solved separately and then combined before the final maze-generation
 step. To form a connected grid, additional links are manually
 introduced between otherwise disjoint letter strokes and at the
 designated endpoints. For visual clarity, the SMT encoding further
-forbids adjacent crossing tiles; this restriction is purely aesthetic
-and does not affect the core connectivity model.
+forbids adjacent crossing tiles. In the two-dimensional depiction, this
+restriction improves visual clarity. In the three-dimensional
+realization, the same restriction also ensures enough graph distance
+between upper and lower crossing elements for the height assignment.
 
 \begin{figure}[h!tbp]
   \centering
