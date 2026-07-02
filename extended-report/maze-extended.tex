@@ -673,9 +673,9 @@ unsatisfiable.
 The SMT encoding described above produces a prescribed solution path:
 a sequence of tile choices that traces the desired pattern and
 satisfies the planar or layered path constraints. A maze, however,
-contains more than its solution path. It also includes additional
-passages that fill the underlying grid while preserving the uniqueness
-of the entry--exit route.
+contains more than its solution path: it also includes additional
+passages through the remaining grid positions while preserving the
+prescribed entry--exit route as the unique solution.
 
 We separate this construction into two levels. First, the prescribed
 solution path is completed to a full topological maze, represented as
@@ -732,14 +732,162 @@ connectivity.
 
 \subsection{Three-Dimensional Realization of Woven Mazes}
 
+The woven maze constructed in the previous subsection is already
+complete as a topological object: it is a passage graph whose
+crossings record which local passage goes over and which goes
+under. To realize this object geometrically, we assign integer height
+levels to the passage nodes and then convert the resulting
+height-labeled graph into three-dimensional primitives.
+
 \subsubsection{Height Constraints and Feasibility}
-% TODO: Add the feasibility constraints for assigning heights to layered crossings.
+
+Let \(G=(V,E)\) be the completed woven maze graph after crossing
+positions have been expanded into over and under passage nodes. For
+each crossing, let \(o\in V\) denote the node corresponding to the
+over-passage and \(u\in V\) the node corresponding to the
+under-passage. We write \(O\) for the set of all over-passage crossing
+nodes and \(U\) for the set of all under-passage crossing nodes.
+
+The height assignment is a function
+\[
+h:V\to \{0,1,\ldots,g\},
+\]
+where
+\[
+g =
+\texttt{clearance\_levels}+\texttt{bridge\_thickness\_levels}
+\]
+is the required vertical separation between an under-passage and the
+corresponding over-passage. In the examples below we use the default
+choice \(g=2\), corresponding to one empty clearance level and one
+bridge thickness level.
+
+The fixed crossing constraints are
+\[
+h(u)=0 \quad (u\in U),
+\qquad
+h(o)=g \quad (o\in O).
+\]
+In addition, adjacent passage nodes must differ by at most one level:
+\[
+|h(x)-h(y)|\le 1
+\qquad\text{for every edge }xy\in E.
+\]
+This condition ensures that all height changes can be realized by
+local stairs or ramps between adjacent passage elements.
+
+The following simple criterion gives a sufficient condition for
+feasibility.  Let \(d_G(v,U)\) denote the shortest graph distance from
+\(v\) to the set \(U\). If
+\[
+d_G(o,U)\ge g
+\qquad\text{for every }o\in O,
+\]
+then a feasible height assignment exists. Indeed, define
+\[
+h(v)=\min\{g,d_G(v,U)\}.
+\]
+For every under-passage node \(u\in U\), we have \(d_G(u,U)=0\), hence
+\(h(u)=0\). For every over-passage node \(o\in O\), the distance
+condition gives \(d_G(o,U)\ge g\), hence \(h(o)=g\). Finally, if
+\(xy\in E\), then the distance-to-\(U\) function changes by at most
+one along the edge:
+\[
+|d_G(x,U)-d_G(y,U)|\le 1.
+\]
+Clamping by \(\min\{g,\cdot\}\) cannot increase this difference, so
+\[
+|h(x)-h(y)|\le 1.
+\]
+Thus \(h\) satisfies all height constraints.
+
+For the default setting \(g=2\), it is enough to ensure that no
+over-passage crossing node is directly adjacent to an under-passage
+crossing node. This is why the construction avoids adjacent crossings
+in the generated examples: besides improving the visual separation of
+crossings in two-dimensional drawings, it also provides the
+graph-distance separation needed for the height assignment.
 
 \subsubsection{Optimal Height Assignment}
-% TODO: Add the dynamic programming formulation for height assignment.
+
+The constructive height function above proves existence, but it need
+not give the most visually pleasing result. In practice, we choose
+heights by dynamic programming on the completed maze tree. The
+optimization objective is lexicographic:
+\[
+\left(
+\sum_{xy\in E}|h(x)-h(y)|,\;
+\sum_{v\in V}h(v)
+\right).
+\]
+The first component minimizes the total amount of height change across
+the maze, producing smoother large-scale geometry. The second
+component breaks ties by preferring lower overall height.
+
+Root the tree \(G\) arbitrarily. For each node \(v\), let \(T_v\) be
+the subtree rooted at \(v\). For each possible height \(z\) of \(v\),
+define \(F_v(z)\) to be the best lexicographic cost for the subtree
+\(T_v\), assuming \(h(v)=z\). If \(v\) has a fixed height, then only
+that value is allowed; otherwise \(z\in\{0,\ldots,g\}\).
+
+For a leaf \(v\),
+\[
+F_v(z)=(0,z).
+\]
+For an internal node \(v\), the cost is obtained by combining the
+optimal choices for its children:
+\[
+F_v(z)
+=
+(0,z)
++
+\sum_{w\in \mathrm{children}(v)}
+\min_{\substack{z'\in D_w\\ |z-z'|\le 1}}
+\left(
+F_w(z') + (|z-z'|,0)
+\right),
+\]
+where \(D_w\) is the allowed height domain of \(w\). The minimization
+is lexicographic. If no child height \(z'\) satisfies \(|z-z'|\le 1\),
+then the state \(F_v(z)\) is infeasible.
+
+After all subtree tables are computed bottom-up, the root height is
+chosen by the same lexicographic rule, and the optimal height
+assignment is recovered by backtracking the choices made in the
+recurrence. Since the height range has only \(g+1\) possible values
+per node, and \(g\) is small in our applications, this dynamic program
+is efficient for the maze sizes used in the examples.
 
 \subsubsection{Geometric Construction}
-% TODO: Add the 3D geometric construction from the assigned heights.
+
+Once the height plan has been computed, the height-labeled maze graph
+is converted into a set of three-dimensional primitives. This
+conversion is separated from any particular rendering or export
+backend: the intermediate 3D plan records the geometric roles of maze
+components without depending on a specific output format.
+
+Each passage node becomes a platform at its assigned height level. If
+the node is the over node of a crossing, it is represented as a bridge
+element suspended above the corresponding under-passage. Adjacent
+nodes of equal height are connected by horizontal connectors. Adjacent
+nodes whose heights differ by one level are connected by stair
+elements, subdivided into a fixed number of small steps. The
+designated entry and exit are represented by opening extensions. When
+the solution path is displayed, it is added as a raised ribbon
+following the unique entry--exit path in the completed maze tree.
+
+Physical dimensions are controlled by a small set of parameters,
+including the cell size, passage width, base height, vertical level
+height, and stair subdivision count. An integer height level \(\ell\)
+is converted to a physical top height by
+\[
+z(\ell)=\texttt{base\_height}+\ell\cdot\texttt{level\_height}.
+\]
+The clearance below an over-crossing is checked against the required
+gap levels and the thickness of the bridge element. Thus the discrete
+height plan provides the combinatorial structure, while the geometric
+construction turns it into an explicit three-dimensional maze with
+platforms, bridges, connectors, stairs, and openings.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Examples}
