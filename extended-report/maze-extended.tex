@@ -714,10 +714,21 @@ they merge distinct connected components. This Kruskal-style
 completion preserves the tree structure while incorporating the
 selected over--under crossings.
 
+For two-dimensional output, the completed passage graph is rendered
+using standard wall-and-passage conventions for grid mazes, with inset
+corridors used to depict woven passages as in Buck's treatment of
+weave rendering \cite[Chs.~2 and~9]{Buck2015MazesForProgrammers}. In
+the planar case, walls are drawn between adjacent grid positions that
+are not connected by a passage. In the woven case, over- and
+under-passages are drawn as separated lanes within a grid position,
+making the crossing relation visible without changing the underlying
+passage graph.
+
 At this point the maze is complete as a combinatorial object. The
-subsequent three-dimensional construction does not change this
-connectivity; it assigns heights and geometry to the already completed
-woven passage graph.
+two-dimensional renderings are visualizations of this passage graph,
+while the subsequent three-dimensional construction assigns heights
+and geometry to the already completed woven maze without changing its
+connectivity.
 
 \subsection{Three-Dimensional Realization of Woven Mazes}
 
@@ -741,11 +752,11 @@ pattern was split into two subpatterns, ``A'' and ``rt'', which were
 solved separately and then combined before the final maze-generation
 step. To form a connected grid, additional links are manually
 introduced between otherwise disjoint letter strokes and at the
-designated endpoints. For visual clarity, the SMT encoding further
-forbids adjacent crossing tiles. In the two-dimensional depiction, this
-restriction improves visual clarity. In the three-dimensional
-realization, the same restriction also ensures enough graph distance
-between upper and lower crossing elements for the height assignment.
+designated endpoints. The SMT encoding further forbids adjacent
+crossing tiles. In the two-dimensional depiction, this improves visual
+clarity; in the three-dimensional realization, the same restriction
+ensures enough graph distance between upper and lower crossing
+elements for the height assignment.
 
 \begin{figure}[h!tbp]
   \centering
@@ -770,6 +781,19 @@ post-processing, and produces dense, visually structured solutions
 directly from the input pattern. The results illustrate how
 constraint-based reasoning can serve as an effective bridge between
 visual design and algorithmic path synthesis.
+
+\section*{Code Availability}
+
+The implementation is split across two public GitHub repositories. The
+SMT-based path synthesis code, including the Lean implementation,
+SMT-LIB encoder, solver interface, and manuscript sources, is
+available at \url{https://github.com/txyyss/opt-maze}. The Python code
+for completing synthesized paths into planar and woven mazes,
+assigning heights for three-dimensional realizations, exporting
+geometry, and rendering examples is available at
+\url{https://github.com/txyyss/maze-construction}. The two
+repositories correspond to the two main computational stages of this
+report: path synthesis and maze construction.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{acks}
