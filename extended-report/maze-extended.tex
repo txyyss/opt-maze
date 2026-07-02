@@ -670,8 +670,54 @@ unsatisfiable.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Maze Construction}
 
-\subsection{Planar Maze Construction}
-% TODO: Add the planar maze completion construction.
+The SMT encoding described above produces a prescribed solution path:
+a sequence of tile choices that traces the desired pattern and
+satisfies the planar or layered path constraints. A maze, however,
+contains more than its solution path. It also includes additional
+passages that fill the underlying grid while preserving the uniqueness
+of the entry--exit route.
+
+We separate this construction into two levels. First, the prescribed
+solution path is completed to a full topological maze, represented as
+a passage graph. This graph is a tree, so the path between the entry
+and exit is unique. Second, in the woven case, the completed topology
+is realized geometrically by assigning heights to over--under passages
+and converting the result into three-dimensional primitives.
+
+\subsection{Maze Completion from a Prescribed Solution Path}
+
+Randomized spanning-tree algorithms are a standard way to generate
+perfect mazes, in which every pair of cells is connected by a unique
+path; see, for example, Buck's discussion of perfect mazes, Wilson's
+algorithm, and randomized Kruskal's algorithm~\cite[Chs.~1, 4,
+  and~10]{Buck2015MazesForProgrammers}.  Our setting differs in that
+the entry--exit solution path is prescribed in advance. We therefore
+treat this path as a fixed subgraph and extend it to a spanning tree
+of the underlying maze graph. Since the final passage graph is a tree
+and already contains the prescribed path from the entry to the exit,
+that path remains the unique solution of the completed maze.
+
+In the planar implementation, this completion is performed using a
+Wilson-style loop-erased random walk initialized by the prescribed
+solution path. The path edges are inserted first, and their grid
+positions are marked as already included in the maze. Each remaining
+grid position is then attached by a loop-erased random walk that
+terminates when it reaches the existing tree. This yields a perfect
+maze containing the prescribed solution path.
+
+For woven mazes, the same topological goal is applied to an expanded
+over--under graph. A crossing position may contain both an over node
+and an under node occupying the same grid position. Required crossings
+and solution-path links are inserted first. The remaining candidate
+passages are then processed in randomized order and added only when
+they merge distinct connected components. This Kruskal-style
+completion preserves the tree structure while incorporating the
+selected over--under crossings.
+
+At this point the maze is complete as a combinatorial object. The
+subsequent three-dimensional construction does not change this
+connectivity; it assigns heights and geometry to the already completed
+woven passage graph.
 
 \subsection{Three-Dimensional Realization of Woven Mazes}
 
