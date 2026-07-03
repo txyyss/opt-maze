@@ -735,9 +735,23 @@ connectivity.
 The woven maze constructed in the previous subsection is already
 complete as a topological object: it is a passage graph whose
 crossings record which local passage goes over and which goes
-under. To realize this object geometrically, we assign integer height
-levels to the passage nodes and then convert the resulting
-height-labeled graph into three-dimensional primitives.
+under. To realize this object geometrically, we must refine this
+topological over--under information into a consistent assignment of
+heights to passage nodes.
+
+The issue is not merely local. At each crossing, the over-passage must
+be separated from the under-passage by enough vertical clearance. At
+the same time, adjacent passage nodes elsewhere in the maze should
+change height only gradually, so that the transition can be realized
+by a short stair. Thus a topologically valid woven maze still
+requires a global height plan before it can be converted into
+three-dimensional geometry.
+
+We handle the height-planning part in two steps. First, we formulate
+the height constraints and show that, under the crossing-separation
+condition used in the construction, a feasible height assignment
+exists. Second, among feasible assignments, we choose one that
+minimizes total height variation and then total height.
 
 \subsubsection{Height Constraints and Feasibility}
 
@@ -774,11 +788,11 @@ In addition, adjacent passage nodes must differ by at most one level:
 \qquad\text{for every edge }xy\in E.
 \]
 This condition ensures that all height changes can be realized by
-local stairs or ramps between adjacent passage elements.
+local stairs between adjacent passage elements.
 
-The following simple criterion gives a sufficient condition for
-feasibility.  Let \(d_G(v,U)\) denote the shortest graph distance from
-\(v\) to the set \(U\). If
+The separation condition used in our construction is enough to
+guarantee that these constraints are satisfiable. Let \(d_G(v,U)\)
+denote the shortest graph distance from \(v\) to the set \(U\). If
 \[
 d_G(o,U)\ge g
 \qquad\text{for every }o\in O,
