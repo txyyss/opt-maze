@@ -725,42 +725,47 @@ making the crossing relation visible without changing the underlying
 passage graph.
 
 At this point the maze is complete as a combinatorial object. The
-two-dimensional renderings are visualizations of this passage graph,
-while the subsequent three-dimensional construction assigns heights
-and geometry to the already completed woven maze without changing its
-connectivity.
+two-dimensional renderings described above are visualizations of this
+passage graph, not additional topological constructions. For an
+ordinary planar maze, a three-dimensional realization is similarly
+direct: the walls of the two-dimensional layout may simply be extruded
+to a fixed height. Woven mazes require an additional geometric step,
+since their over--under relations must be realized as physical
+vertical separation.
 
 \subsection{Three-Dimensional Realization of Woven Mazes}
 
-The woven maze constructed in the previous subsection is already
-complete as a topological object: it is a passage graph whose
-crossings record which local passage goes over and which goes
-under. To realize this object geometrically, we must refine this
-topological over--under information into a consistent assignment of
-heights to passage nodes.
+A woven maze is represented by a passage graph whose crossings record
+which local passage goes over and which goes under. To realize this
+graph geometrically, we assign integer height levels to the passage
+nodes and then convert the resulting height-labeled graph into
+three-dimensional primitives.
 
-The issue is not merely local. At each crossing, the over-passage must
-be separated from the under-passage by enough vertical clearance. At
-the same time, adjacent passage nodes elsewhere in the maze should
-change height only gradually, so that the transition can be realized
-by a short stair. Thus a topologically valid woven maze still
-requires a global height plan before it can be converted into
-three-dimensional geometry.
+The height assignment must satisfy two requirements at once. At each
+crossing, the over-passage must be separated from the under-passage by
+enough vertical clearance. Along ordinary maze links, adjacent passage
+nodes should change height only gradually, so that the transition can
+be realized by a short stair. Thus height planning is a global problem
+on the completed woven passage graph.
 
-We handle the height-planning part in two steps. First, we formulate
-the height constraints and show that, under the crossing-separation
-condition used in the construction, a feasible height assignment
-exists. Second, among feasible assignments, we choose one that
-minimizes total height variation and then total height.
+We separate the three-dimensional realization into height planning and
+geometric construction. The height-planning step first formulates the
+constraints and proves feasibility under the crossing-separation
+condition used in the construction; it then chooses, among feasible
+assignments, one that minimizes total height variation and then total
+height. The geometric construction step converts the resulting
+height-labeled graph into platforms, bridges, connectors, stairs, and
+openings.
 
 \subsubsection{Height Constraints and Feasibility}
 
-Let \(G=(V,E)\) be the completed woven maze graph after crossing
-positions have been expanded into over and under passage nodes. For
-each crossing, let \(o\in V\) denote the node corresponding to the
-over-passage and \(u\in V\) the node corresponding to the
-under-passage. We write \(O\) for the set of all over-passage crossing
-nodes and \(U\) for the set of all under-passage crossing nodes.
+For the height-planning problem, let \(G=(V,E)\) be the completed
+woven maze graph after crossing positions have been expanded into over
+and under passage nodes. For each crossing, let \(o\in V\) denote the
+node corresponding to the over-passage and \(u\in V\) the node
+corresponding to the under-passage. We write \(O\) for the set of all
+over-passage crossing nodes and \(U\) for the set of all under-passage
+crossing nodes.
 
 The height assignment is a function
 \[
