@@ -759,27 +759,26 @@ openings.
 
 \subsubsection{Height Constraints and Feasibility}
 
-For the height-planning problem, let \(G=(V,E)\) be the completed
-woven maze graph after crossing positions have been expanded into over
-and under passage nodes. For each crossing, let \(o\in V\) denote the
-node corresponding to the over-passage and \(u\in V\) the node
-corresponding to the under-passage. We write \(O\) for the set of all
-over-passage crossing nodes and \(U\) for the set of all under-passage
-crossing nodes.
+For the height-planning problem, let \(G=(V,E)\) be the completed woven
+maze graph after crossing positions have been expanded into over and
+under passage nodes. Let \(O\subseteq V\) and \(U\subseteq V\) denote,
+respectively, the sets of over-passage and under-passage nodes at all
+crossings.
 
-The height assignment is a function
+A height assignment gives each passage node a discrete top-surface
+level:
 \[
-h:V\to \{0,1,\ldots,g\},
+h:V\to \{0,1,\ldots,g\}.
 \]
-where
+Passage elements have nonzero thickness. Therefore, at a crossing, the
+over-passage must be raised enough to provide both empty clearance above
+the under-passage and room for the thickness of the over-passage itself.
+Let \(c\) be the required number of empty clearance levels and \(b\) the
+number of levels occupied by the over-passage thickness. We set
 \[
-g =
-\texttt{clearance\_levels}+\texttt{bridge\_thickness\_levels}
+g=c+b.
 \]
-is the required vertical separation between an under-passage and the
-corresponding over-passage. In the examples below we use the default
-choice \(g=2\), corresponding to one empty clearance level and one
-bridge thickness level.
+In the examples below, we use \(c=b=1\), hence \(g=2\).
 
 The fixed crossing constraints are
 \[
@@ -787,6 +786,9 @@ h(u)=0 \quad (u\in U),
 \qquad
 h(o)=g \quad (o\in O).
 \]
+With this convention, the bottom of the over-passage is \(c\) levels above
+the top of the under-passage, leaving the prescribed clearance.
+
 In addition, adjacent passage nodes must differ by at most one level:
 \[
 |h(x)-h(y)|\le 1
