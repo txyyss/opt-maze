@@ -642,6 +642,14 @@ virtual \(\kind{h}/\kind{v}\) split, so the same coverage constraint
 the corresponding activation predicates are false, and the encoding
 degenerates naturally to the planar parent--rank formulation.
 
+The virtual-element encoding describes how crossings are represented
+when they occur. In the woven-maze instances used for the constructions
+below, we additionally impose a spacing condition: crossing tiles are
+not allowed to be adjacent in the grid. In two-dimensional renderings,
+this improves visual clarity. In the three-dimensional realization,
+the same condition ensures enough graph distance between over- and
+under-passage crossing elements for the fixed-level height assignment.
+
 \subsection{Experiments and Performance}
 
 Using OpenSMT2~\cite{OpenSMT2} on an M1 Max MacBook Pro, we also
@@ -815,8 +823,7 @@ h(o)=g \quad (o\in O).
 This convention automatically satisfies the crossing-clearance
 requirement, but it is not a physical necessity. It is an additional
 modeling choice that keeps all under-crossings at level \(0\), all
-over-crossings at level \(g\), and all remaining nodes within the
-finite range \(\{0,1,\ldots,g\}\). The only remaining issue is whether
+over-crossings at level \(g\). The only remaining issue is whether
 this stronger convention is compatible with the local height-change
 constraints.
 
@@ -839,9 +846,10 @@ geometrically but are not adjacent in \(G\), and \(o\notin U\), so
 this crossing does not put \(o\) at distance \(0\) or \(1\) from
 \(U\). The remaining way for \(o\) to be at distance \(1\) from \(U\)
 would be an edge in \(G\) from an over-passage crossing node to an
-under-passage crossing node at a neighboring crossing. The
-path-synthesis stage forbids adjacent crossing tiles, and in the
-expanded passage graph this prevents such over-to-under crossing
+under-passage crossing node at a neighboring crossing. By the spacing
+condition stated above, the completed woven-maze construction avoids
+adjacent crossings, and in the expanded passage graph this prevents
+such over-to-under crossing
 adjacencies. Therefore \(d_G(o,U)\ge 2\), so \(h(o)=2=g\). Thus the
 fixed crossing heights are satisfied.
 
@@ -957,11 +965,7 @@ pattern was split into two subpatterns, ``A'' and ``rt'', which were
 solved separately and then combined before the final maze-generation
 step. To form a connected grid, additional links are manually
 introduced between otherwise disjoint letter strokes and at the
-designated endpoints. The SMT encoding further forbids adjacent
-crossing tiles. In the two-dimensional depiction, this improves visual
-clarity; in the three-dimensional realization, the same restriction
-ensures enough graph distance between upper and lower crossing
-elements for the height assignment.
+designated endpoints.
 
 \begin{figure}[h!tbp]
   \centering
