@@ -741,7 +741,7 @@ graph geometrically, we assign integer height levels to the passage
 nodes and then convert the resulting height-labeled graph into
 three-dimensional primitives.
 
-The height assignment must satisfy two requirements at once. At each
+The height assignment must satisfy two physical requirements. At each
 crossing, the over-passage must be separated from the under-passage by
 enough vertical clearance. Along ordinary maze links, adjacent passage
 nodes should change height only gradually, so that the transition can
@@ -749,95 +749,131 @@ be realized by a short stair. Thus height planning is a global problem
 on the completed woven passage graph.
 
 We separate the three-dimensional realization into height planning and
-geometric construction. The height-planning step first formulates the
-constraints and proves feasibility under the crossing-separation
-condition used in the construction; it then chooses, among feasible
-assignments, one that minimizes total height variation and then total
-height. The geometric construction step converts the resulting
-height-labeled graph into platforms, bridges, connectors, stairs, and
-openings.
+geometric construction. The height-planning step first states the
+physical height constraints, then adopts a stronger fixed-level
+convention that keeps all crossings at a small number of integer
+levels, and finally proves that this convention is feasible under the
+crossing-separation condition used in the construction. Among feasible
+assignments, we then choose one that minimizes total height variation
+and then total height. The geometric construction step converts the
+resulting height-labeled graph into platforms, bridges, connectors,
+stairs, and openings.
 
 \subsubsection{Height Constraints and Feasibility}
 
-For the height-planning problem, let \(G=(V,E)\) be the completed woven
-maze graph after crossing positions have been expanded into over and
-under passage nodes. Let \(O\subseteq V\) and \(U\subseteq V\) denote,
-respectively, the sets of over-passage and under-passage nodes at all
-crossings.
+For the height-planning problem, let \(G=(V,E)\) be the completed
+woven maze graph after crossing positions have been expanded into over
+and under passage nodes. The over and under nodes at the same crossing
+are co-located geometrically, but they are not adjacent in \(G\). Let
+\(\mathcal{C}\subseteq V\times V\) be the set of ordered crossing
+pairs \((o,u)\), where \(o\) is the over-passage node and \(u\) is the
+corresponding under-passage node. We write \(O\subseteq V\) and
+\(U\subseteq V\) for the sets of all over-passage and under-passage
+crossing nodes.
 
 A height assignment gives each passage node a discrete top-surface
-level:
+level, initially viewed as a nonnegative integer:
 \[
-h:V\to \{0,1,\ldots,g\}.
+h:V\to \mathbb{Z}_{\ge 0}.
 \]
 Passage elements have nonzero thickness. Therefore, at a crossing, the
-over-passage must be raised enough to provide both empty clearance above
-the under-passage and room for the thickness of the over-passage itself.
-Let \(c\) be the required number of empty clearance levels and \(b\) the
-number of levels occupied by the over-passage thickness. We set
+over-passage must be raised enough to provide both empty clearance
+above the under-passage and room for the thickness of the over-passage
+itself.  Let \(c\) be the required number of empty clearance levels
+and \(b\) the number of levels occupied by the over-passage
+thickness. We set
 \[
 g=c+b.
 \]
-In the examples below, we use \(c=b=1\), hence \(g=2\).
+Here \(c\) and \(b\) are positive integers, so the smallest
+non-degenerate choice is \(g=2\). In the examples below, we use
+\(c=b=1\), hence \(g=2\).
 
-The fixed crossing constraints are
+The physical crossing-clearance requirement is
+\[
+h(o)-h(u)\ge g
+\qquad\text{for every }(o,u)\in\mathcal{C}.
+\]
+The local height-change requirement is
+\[
+|h(x)-h(y)|\le 1
+\qquad\text{for every edge }\{x,y\}\in E.
+\]
+Together, these conditions say that crossings have enough vertical
+clearance and that adjacent passage elements can be connected by local
+stairs. By themselves, however, they do not fix the absolute height of
+a crossing: different crossings could be realized at different
+vertical offsets.
+
+For a simpler and lower-profile geometry, we impose the stronger
+fixed-level convention
 \[
 h(u)=0 \quad (u\in U),
 \qquad
 h(o)=g \quad (o\in O).
 \]
-With this convention, the bottom of the over-passage is \(c\) levels above
-the top of the under-passage, leaving the prescribed clearance.
+This convention automatically satisfies the crossing-clearance
+requirement, but it is not a physical necessity. It is an additional
+modeling choice that keeps all under-crossings at level \(0\), all
+over-crossings at level \(g\), and all remaining nodes within the
+finite range \(\{0,1,\ldots,g\}\). The only remaining issue is whether
+this stronger convention is compatible with the local height-change
+constraints.
 
-In addition, adjacent passage nodes must differ by at most one level:
+We now check compatibility constructively for the default choice
+\(g=2\), which is the choice used in the examples. If there are no
+crossings, then the all-zero height assignment is sufficient.
+Otherwise \(U\neq\varnothing\), and the completed passage graph \(G\)
+is connected, so every node has finite distance to \(U\). Define
+\(d_G(v,U)\) to be the shortest graph distance from \(v\) to the set
+\(U\), and assign heights by
 \[
-|h(x)-h(y)|\le 1
-\qquad\text{for every edge }xy\in E.
+h(v)=\min\{2,d_G(v,U)\}.
 \]
-This condition ensures that all height changes can be realized by
-local stairs between adjacent passage elements.
 
-The separation condition used in our construction is enough to
-guarantee that these constraints are satisfiable. Let \(d_G(v,U)\)
-denote the shortest graph distance from \(v\) to the set \(U\). If
-\[
-d_G(o,U)\ge g
-\qquad\text{for every }o\in O,
-\]
-then a feasible height assignment exists. Indeed, define
-\[
-h(v)=\min\{g,d_G(v,U)\}.
-\]
-For every under-passage node \(u\in U\), we have \(d_G(u,U)=0\), hence
-\(h(u)=0\). For every over-passage node \(o\in O\), the distance
-condition gives \(d_G(o,U)\ge g\), hence \(h(o)=g\). Finally, if
-\(xy\in E\), then the distance-to-\(U\) function changes by at most
-one along the edge:
+We first verify the fixed crossing heights. For every under-passage
+node \(u\in U\), we have \(d_G(u,U)=0\), hence \(h(u)=0\). For an
+over-passage node \(o\in O\), we need to show that \(h(o)=2\). The
+expanded over and under nodes at the same crossing are co-located
+geometrically but are not adjacent in \(G\), and \(o\notin U\), so
+this crossing does not put \(o\) at distance \(0\) or \(1\) from
+\(U\). The remaining way for \(o\) to be at distance \(1\) from \(U\)
+would be an edge in \(G\) from an over-passage crossing node to an
+under-passage crossing node at a neighboring crossing. The
+path-synthesis stage forbids adjacent crossing tiles, and in the
+expanded passage graph this prevents such over-to-under crossing
+adjacencies. Therefore \(d_G(o,U)\ge 2\), so \(h(o)=2=g\). Thus the
+fixed crossing heights are satisfied.
+
+It remains to check the local height-change constraints. If
+\(\{x,y\}\in E\), then the distance-to-\(U\) function changes by at
+most one across this edge:
 \[
 |d_G(x,U)-d_G(y,U)|\le 1.
 \]
-Clamping by \(\min\{g,\cdot\}\) cannot increase this difference, so
+Clamping these distances by \(\min\{2,\cdot\}\) cannot increase this
+difference, so
 \[
 |h(x)-h(y)|\le 1.
 \]
-Thus \(h\) satisfies all height constraints.
+Therefore the fixed-level convention is compatible with the local
+height-change constraints, and the constructed height assignment is
+feasible.
 
-For the default setting \(g=2\), it is enough to ensure that no
-over-passage crossing node is directly adjacent to an under-passage
-crossing node. This is why the construction avoids adjacent crossings
-in the generated examples: besides improving the visual separation of
-crossings in two-dimensional drawings, it also provides the
-graph-distance separation needed for the height assignment.
+For larger choices of \(g\), the same distance-based construction
+would require the stronger graph-distance separation
+\(d_G(o,U)\ge g\) for every \(o\in O\).
 
 \subsubsection{Optimal Height Assignment}
 
-The constructive height function above proves existence, but it need
-not give the most visually pleasing result. In practice, we choose
-heights by dynamic programming on the completed maze tree. The
+The constructive height function above proves existence for the
+fixed-level assignment used in the examples, but it need not give the
+most visually pleasing result. In practice, we choose heights by
+dynamic programming on the completed maze tree. The
 optimization objective is lexicographic:
 \[
 \left(
-\sum_{xy\in E}|h(x)-h(y)|,\;
+\sum_{\{x,y\}\in E}|h(x)-h(y)|,\;
 \sum_{v\in V}h(v)
 \right).
 \]
