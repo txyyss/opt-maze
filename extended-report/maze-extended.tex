@@ -958,28 +958,62 @@ conversion is separated from any particular rendering or export
 backend: the intermediate 3D plan records the geometric roles of maze
 components without depending on a specific output format.
 
-Each passage node becomes a platform at its assigned height level. If
-the node is the over node of a crossing, it is represented as a bridge
-element suspended above the corresponding under-passage. Adjacent
-nodes of equal height are connected by horizontal connectors. Adjacent
-nodes whose heights differ by one level are connected by stair
-elements, subdivided into a fixed number of small steps. The
-designated entry and exit are represented by opening extensions. When
-the solution path is displayed, it is added as a raised ribbon
-following the unique entry--exit path in the completed maze tree.
+The construction begins with a rectangular base plate, when one is
+requested, and then places geometric primitives for the passage
+graph. Ordinary passage nodes, including under-passage crossing nodes,
+become platforms at their assigned height levels. The over node of a
+crossing is represented instead as a bridge element suspended above
+the corresponding under-passage. Thus the same topological crossing
+information used in the height plan is realized geometrically as a
+local overpass-and-underpass structure.
+
+Edges of the passage graph are converted according to the height
+difference between their endpoints. Adjacent nodes of equal height are
+connected by horizontal connector elements. Adjacent nodes whose
+heights differ by one level are connected by a short sequence of stair
+segments, so that vertical changes are spread across the link rather
+than occurring as a discontinuous jump. The designated entry and exit
+are represented by opening extensions from the corresponding boundary
+nodes.
+
+Raised parts of the maze may also require supports. The construction
+therefore allows either solid support below platforms or selected
+support posts beneath raised elements. These supports are geometric
+additions only: they do not change the passage graph, the solution
+path, or the maze connectivity.
+
+When the solution path is displayed, it is added as a raised ribbon
+following the unique entry--exit path in the completed maze tree. This
+ribbon is treated as a separate visual primitive rather than as part
+of the walkable maze topology. Its width, lift above the passage
+surface, and thickness are chosen so that it remains inside the
+passage footprint and below the available clearance at crossings.
 
 Physical dimensions are controlled by a small set of parameters,
-including the cell size, passage width, base height, vertical level
-height, and stair subdivision count. An integer height level \(\ell\)
-is converted to a physical top height by
+including the cell size, passage width, passage-body thickness,
+vertical level height, stair subdivision count, base-plate thickness,
+support style, and solution-ribbon dimensions. If \(z_0\) is the
+physical top height of level \(0\), and \(\Delta z\) is the physical
+height represented by one integer level, then a node at integer height
+level \(\ell\) has top-surface height
 \[
-z(\ell)=\texttt{base\_height}+\ell\cdot\texttt{level\_height}.
+z(\ell)=z_0+\ell\Delta z.
 \]
-The clearance below an over-crossing is checked against the required
-gap levels and the thickness of the bridge element. Thus the discrete
-height plan provides the combinatorial structure, while the geometric
-construction turns it into an explicit three-dimensional maze with
-platforms, bridges, connectors, stairs, and openings.
+The discrete height plan therefore determines the vertical placement
+of all platforms, bridges, connectors, stairs, openings, and
+solution-ribbon segments.
+
+Finally, the construction checks that the physical dimensions are
+compatible with the discrete height gap. In particular, the vertical
+clearance below an over-crossing must meet the required empty
+clearance after accounting for the thickness of the passage element.
+If the solution ribbon is included, the combined lift and thickness of
+the ribbon must also remain below this available clearance. Thus the
+discrete height assignment supplies the combinatorial structure, while
+the geometric construction turns it into an explicit three-dimensional
+maze with walkable passages, crossings, supports, openings, and an
+optional highlighted solution.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Examples}
