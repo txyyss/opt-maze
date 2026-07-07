@@ -700,7 +700,7 @@ algorithm, and randomized Kruskal's algorithm~\cite[Chs.~1, 4,
   and~10]{Buck2015MazesForProgrammers}.  Our setting differs in that
 the entry--exit solution path is prescribed in advance. We therefore
 treat this path as a fixed subgraph and extend it to a spanning tree
-of the underlying maze graph. Since the final passage graph is a tree
+of the completed maze graph. Since the final passage graph is a tree
 and already contains the prescribed path from the entry to the exit,
 that path remains the unique solution of the completed maze.
 
@@ -989,7 +989,7 @@ passages and auxiliary support geometry are attached.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.62\linewidth]{crossing-construction-npr.pdf}
+  \includegraphics[width=0.62\linewidth]{figures/crossing-construction-npr.pdf}
   \caption{Local geometric construction of a woven crossing.}
   \Description{A stylized local three-dimensional crossing construction with a lower passage, raised bridge, platforms, stairs, support posts, and a base plate.}
   \label{fig:crossing-construction}
@@ -1020,8 +1020,8 @@ Finally, the construction checks that the physical dimensions are
 compatible with the discrete height gap. In particular, the vertical
 clearance below an over-crossing must meet the required empty
 clearance after accounting for the thickness of the passage element.
-If the solution ribbon is included, the combined lift and thickness of
-the ribbon must also remain below this available clearance. Thus the
+If the solution ribbon is included, its lift and thickness must also
+fit within this available clearance. Thus the
 discrete height assignment supplies the combinatorial structure, while
 the geometric construction turns it into an explicit three-dimensional
 maze with walkable passages, crossings, supports, openings, and an
@@ -1049,7 +1049,7 @@ designated endpoints.
   \label{fig:examples}
 \end{figure}
 
-Figure~\ref{fig:inf-3d} shows a top-down rendering of a
+Figure~\ref{fig:inf-3d} shows an orthographic view of a
 three-dimensional woven maze realization produced by the construction
 described above. The light-colored geometry is the completed
 three-dimensional maze, and the red ribbon marks the unique
@@ -1057,28 +1057,31 @@ entry--exit solution path for the ``$\infty$'' pattern.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.98\linewidth]{crossed-inf-npr.pdf}
-  \caption{Top-down view of the three-dimensional woven maze
+  \includegraphics[width=0.98\linewidth]{figures/crossed-inf-npr.pdf}
+  \caption{Orthographic three-dimensional rendering of the woven maze
     realization for the ``$\infty$'' pattern.}
-  \Description{A top-down rendering of a three-dimensional woven maze for an infinity-shaped solution path, with light-colored passages and a red highlighted solution ribbon.}
+  \Description{An orthographic three-dimensional rendering of a woven
+    maze for an infinity-shaped solution path, with light-colored
+    passages and a red highlighted solution ribbon.}
   \label{fig:inf-3d}
 \end{figure}
 
 %%%%%%%%%%%%%
 \section{Discussion and Conclusions}
 
-We investigated the synthesis of long single-stroke maze solution
-paths that trace a prescribed rasterized pattern on a grid, under both
-planar and layered (woven) traversal rules. By formulating the problem
-as a finite constraint satisfaction task, we showed that local
-geometric rules and global connectivity requirements can be expressed
-in a uniform, declarative manner and solved automatically by an SMT
-solver.  This approach supports both planar and woven mazes within the
-same modeling framework, without iterative refinement or
-post-processing, and produces dense, visually structured solutions
-directly from the input pattern. The results illustrate how
-constraint-based reasoning can connect visual design with algorithmic
-path synthesis.
+We presented an SMT-based pipeline for constructing maze structures
+from prescribed rasterized patterns. The central path-synthesis step
+combines local tile-connectivity rules with global parent--rank
+constraints, and supports both planar paths and layered woven paths
+within a unified encoding. The resulting solution path is then
+completed into a perfect maze by standard spanning-tree
+maze-generation methods initialized with the prescribed path. For
+woven mazes, we further give a height assignment and geometric
+construction that realize the over--under crossings as explicit
+three-dimensional structure.  Together, these steps show how
+constraint-based reasoning can connect visual pattern design, maze
+topology, and geometric realization in a single computational
+pipeline.
 
 \section*{Code Availability}
 
