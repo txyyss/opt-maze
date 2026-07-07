@@ -54,10 +54,10 @@
   path is either a planar, self-avoiding route or a layered traversal
   with prescribed over--under crossings, and it serves as a scaffold for
   constructing planar mazes and three-dimensional realizations of woven
-  mazes. This report extends the published Bridges 2026
-  conference paper by giving more representative SMT-LIB examples and
-  by expanding the construction details that connect synthesized paths
-  to concrete maze geometry.
+  mazes. This report extends the published Bridges 2026 conference
+  paper with more representative SMT-LIB examples and a fuller account
+  of how synthesized paths become concrete maze constructions in
+  planar and three-dimensional form.
 
 \end{abstract}
 
@@ -79,8 +79,8 @@ three-dimensional maze geometry.
 We derive two distinct maze solution paths from the same input
 pattern: a planar path and a layered path with crossings. Each
 solution path then serves as a scaffold for maze construction.
-Figure~\ref{fig:inf} shows an example of the resulting planar and
-woven mazes (with and without highlighted solutions).
+Figure~\ref{fig:inf} gives an example of the resulting planar and
+woven mazes, both with and without highlighted solution paths.
 
 \begin{figure}[htbp]
   \centering
@@ -234,9 +234,8 @@ express structurally distinct path types within a single unified
 framework. Under this representation, the planar and layered cases
 differ only in the acceptability of crossing tiles: planar paths
 forbid crossings, while layered paths allow them. This illustrates
-that both path structures can arise from the same set of local
-primitives, with the planar case simply arising as a specialization of
-the layered one by disallowing crossing tiles.
+that both path structures arise from the same local primitives; the
+planar case is obtained simply by disallowing crossing tiles.
 
 \subsection{SMT Encoding}
 
@@ -647,8 +646,8 @@ when they occur. In the woven-maze instances used for the constructions
 below, we additionally impose a spacing condition: crossing tiles are
 not allowed to be adjacent in the grid. In two-dimensional renderings,
 this improves visual clarity. In the three-dimensional realization,
-the same condition ensures enough graph distance between over- and
-under-passage crossing elements for the fixed-level height assignment.
+the same condition provides the graph-distance separation needed by
+the fixed-level height assignment used below.
 
 \subsection{Experiments and Performance}
 
@@ -690,7 +689,7 @@ solution path is completed to a full topological maze, represented as
 a passage graph. This graph is a tree, so the path between the entry
 and exit is unique. Second, in the woven case, the completed topology
 is realized geometrically by assigning heights to over--under passages
-and converting the result into three-dimensional primitives.
+and converting the result into explicit 3D primitives.
 
 \subsection{Maze Completion from a Prescribed Solution Path}
 
@@ -746,15 +745,15 @@ vertical separation.
 A woven maze is represented by a passage graph whose crossings record
 which local passage goes over and which goes under. To realize this
 graph geometrically, we assign integer height levels to the passage
-nodes and then convert the resulting height-labeled graph into
-three-dimensional primitives.
+nodes and then convert the resulting height-labeled graph into an
+explicit collection of 3D primitives.
 
 The height assignment must satisfy two physical requirements. At each
 crossing, the over-passage must be separated from the under-passage by
 enough vertical clearance. Along ordinary maze links, adjacent passage
 nodes should change height only gradually, so that the transition can
-be realized by a short stair. Thus height planning is a global problem
-on the completed woven passage graph.
+be realized by a short stair. Thus height planning must be solved
+globally over the completed woven passage graph.
 
 We separate the three-dimensional realization into height planning and
 geometric construction. The height-planning step first states the
@@ -959,8 +958,8 @@ backend: the intermediate 3D plan records the geometric roles of maze
 components without depending on a specific output format.
 
 The construction begins with a rectangular base plate, when one is
-requested, and then places geometric primitives for the passage
-graph. Ordinary passage nodes, including under-passage crossing nodes,
+requested, and then places geometric primitives for the underlying
+passage graph. Ordinary passage nodes, including under-passage crossing nodes,
 become platforms at their assigned height levels. The over node of a
 crossing is represented instead as a bridge element suspended above
 the corresponding under-passage. Thus the same topological crossing
@@ -973,14 +972,14 @@ connected by horizontal connector elements. Adjacent nodes whose
 heights differ by one level are connected by a short sequence of stair
 segments, so that vertical changes are spread across the link rather
 than occurring as a discontinuous jump. The designated entry and exit
-are represented by opening extensions from the corresponding boundary
-nodes.
+are represented by opening extensions from the appropriate boundary
+nodes of the maze.
 
 Raised parts of the maze may also require supports. The construction
 therefore allows either solid support below platforms or selected
 support posts beneath raised elements. These supports are geometric
 additions only: they do not change the passage graph, the solution
-path, or the maze connectivity.
+path, or the connectivity of the maze.
 
 Figure~\ref{fig:crossing-construction} gives a compact local view of
 these geometric primitives. The lower passage realizes the
@@ -1001,15 +1000,15 @@ following the unique entry--exit path in the completed maze tree. This
 ribbon is treated as a separate visual primitive rather than as part
 of the walkable maze topology. Its width, lift above the passage
 surface, and thickness are chosen so that it remains inside the
-passage footprint and below the available clearance at crossings.
+passage footprint while staying below the crossing clearance.
 
 Physical dimensions are controlled by a small set of parameters,
 including the cell size, passage width, passage-body thickness,
 vertical level height, stair subdivision count, base-plate thickness,
 support style, and solution-ribbon dimensions. If \(z_0\) is the
 physical top height of level \(0\), and \(\Delta z\) is the physical
-height represented by one integer level, then a node at integer height
-level \(\ell\) has top-surface height
+height represented by one integer level, then the top-surface height
+of a node at integer level \(\ell\) is
 \[
 z(\ell)=z_0+\ell\Delta z.
 \]
@@ -1078,8 +1077,8 @@ solver.  This approach supports both planar and woven mazes within the
 same modeling framework, without iterative refinement or
 post-processing, and produces dense, visually structured solutions
 directly from the input pattern. The results illustrate how
-constraint-based reasoning can serve as an effective bridge between
-visual design and algorithmic path synthesis.
+constraint-based reasoning can connect visual design with algorithmic
+path synthesis.
 
 \section*{Code Availability}
 
