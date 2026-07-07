@@ -793,9 +793,9 @@ thickness. We set
 \[
 g=c+b.
 \]
-Here \(c\) and \(b\) are positive integers, so the smallest
-non-degenerate choice is \(g=2\). In the examples below, we use
-\(c=b=1\), hence \(g=2\).
+Since \(c\) and \(b\) are positive integers, the smallest
+non-degenerate choice is \(c=b=1\), giving \(g=2\). We use this
+minimal setting throughout the constructions in this report.
 
 The physical crossing-clearance requirement is
 \[
@@ -827,9 +827,10 @@ over-crossings at level \(g\). The only remaining issue is whether
 this stronger convention is compatible with the local height-change
 constraints.
 
-We now check compatibility constructively for the default choice
-\(g=2\), which is the choice used in the examples. If there are no
-crossings, then the all-zero height assignment is sufficient.
+We now prove that, under the stated crossing-spacing condition, the
+fixed-level convention is compatible with the local height-change
+constraints for the minimal non-degenerate gap \(g=2\). If there are
+no crossings, then the all-zero height assignment is sufficient.
 Otherwise \(U\neq\varnothing\), and the completed passage graph \(G\)
 is connected, so every node has finite distance to \(U\). Define
 \(d_G(v,U)\) to be the shortest graph distance from \(v\) to the set
@@ -874,28 +875,53 @@ would require the stronger graph-distance separation
 
 \subsubsection{Optimal Height Assignment}
 
-The constructive height function above proves existence for the
-fixed-level assignment used in the examples, but it need not give the
-most visually pleasing result. In practice, we choose heights by
-dynamic programming on the completed maze tree. The
-optimization objective is lexicographic:
+The distance-based construction above proves that, for the fixed-level
+convention with \(g=2\) used here, feasible height assignments exist
+under the stated crossing-spacing condition. We now optimize over the
+same feasible set: the under-passage crossing nodes remain fixed at
+level \(0\), the over-passage crossing nodes remain fixed at level
+\(g\), and every maze edge must still satisfy the local height-change
+constraint.
+
+Although heights were introduced as nonnegative integers, no optimum
+is lost by restricting the free nodes to the finite range
+\(\{0,1,\ldots,g\}\). Indeed, given any feasible assignment \(h\),
+define a new assignment \(h'(v)=\min\{h(v),g\}\) for every node
+\(v\). This simultaneous clamping preserves the fixed crossing
+heights, cannot increase any edge height difference, and weakly
+decreases the total height. Thus we use the height domain
+\[
+D_v =
+\begin{cases}
+\{0\}, & v\in U,\\
+\{g\}, & v\in O,\\
+\{0,1,\ldots,g\}, & \text{otherwise}.
+\end{cases}
+\]
+
+Among all assignments satisfying these domains and the local
+height-change constraint, we minimize the lexicographic objective
 \[
 \left(
 \sum_{\{x,y\}\in E}|h(x)-h(y)|,\;
 \sum_{v\in V}h(v)
 \right).
 \]
-The first component minimizes the total amount of height change across
-the maze, producing smoother large-scale geometry. The second
-component breaks ties by preferring lower overall height.
+The first component minimizes the total height variation across maze
+links; under the constraint \(|h(x)-h(y)|\le 1\), this is equivalently
+the number of links that require a stair. The second component breaks
+ties by preferring a lower overall height profile.
 
-Root the tree \(G\) arbitrarily. For each node \(v\), let \(T_v\) be
-the subtree rooted at \(v\). For each possible height \(z\) of \(v\),
-define \(F_v(z)\) to be the best lexicographic cost for the subtree
-\(T_v\), assuming \(h(v)=z\). If \(v\) has a fixed height, then only
-that value is allowed; otherwise \(z\in\{0,\ldots,g\}\).
+Since the completed maze graph \(G\) is a tree, the optimization can
+be solved by dynamic programming. Root \(G\) arbitrarily. For each
+node \(v\), let \(T_v\) be the subtree rooted at \(v\). Once the
+height of \(v\) is fixed, the choices in the child subtrees interact
+only through the height differences on the edges from \(v\) to its
+children.
 
-For a leaf \(v\),
+For each \(z\in D_v\), define \(F_v(z)\) to be the best lexicographic
+cost of the subtree \(T_v\), assuming \(h(v)=z\). If \(v\) is a leaf,
+then
 \[
 F_v(z)=(0,z).
 \]
@@ -910,18 +936,19 @@ F_v(z)
 \min_{\substack{z'\in D_w\\ |z-z'|\le 1}}
 \left(
 F_w(z') + (|z-z'|,0)
-\right),
+\right).
 \]
-where \(D_w\) is the allowed height domain of \(w\). The minimization
-is lexicographic. If no child height \(z'\) satisfies \(|z-z'|\le 1\),
-then the state \(F_v(z)\) is infeasible.
+Here addition of pairs is componentwise, and all minima are taken in
+lexicographic order. If no child height \(z'\in D_w\) satisfies
+\(|z-z'|\le 1\), then the state \(F_v(z)\) is infeasible.
 
 After all subtree tables are computed bottom-up, the root height is
-chosen by the same lexicographic rule, and the optimal height
-assignment is recovered by backtracking the choices made in the
-recurrence. Since the height range has only \(g+1\) possible values
-per node, and \(g\) is small in our applications, this dynamic program
-is efficient for the maze sizes used in the examples.
+chosen by the same lexicographic rule. The optimal height assignment
+is then recovered by backtracking the child-height choices recorded in
+the recurrence. A direct implementation checks all pairs of parent and
+child heights and has running time \(O(|E|g^2)\). Under the minimal
+fixed-level setting used here, \(g=2\), so the running time is linear
+in the size of the maze graph.
 
 \subsubsection{Geometric Construction}
 
