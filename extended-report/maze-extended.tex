@@ -958,13 +958,13 @@ backend: the intermediate 3D plan records the geometric roles of maze
 components without depending on a specific output format.
 
 The construction begins with a rectangular base plate, when one is
-requested, and then places geometric primitives for the underlying
-passage graph. Ordinary passage nodes, including under-passage crossing nodes,
-become platforms at their assigned height levels. The over node of a
-crossing is represented instead as a bridge element suspended above
-the corresponding under-passage. Thus the same topological crossing
-information used in the height plan is realized geometrically as a
-local overpass-and-underpass structure.
+requested, and then places geometric primitives for the completed
+passage graph. Ordinary passage nodes, including under-passage
+crossing nodes, become platforms at their assigned height levels. The
+over node of a crossing is represented instead as a bridge element
+suspended above the corresponding under-passage. Thus the same
+topological crossing information used in the height plan is realized
+geometrically as a local overpass-and-underpass structure.
 
 Edges of the passage graph are converted according to the height
 difference between their endpoints. Adjacent nodes of equal height are
@@ -1020,10 +1020,10 @@ Finally, the construction checks that the physical dimensions are
 compatible with the discrete height gap. In particular, the vertical
 clearance below an over-crossing must meet the required empty
 clearance after accounting for the thickness of the passage element.
-If the solution ribbon is included, its lift and thickness must also
-fit within this available clearance. Thus the
-discrete height assignment supplies the combinatorial structure, while
-the geometric construction turns it into an explicit three-dimensional
+If the solution ribbon is included, its lift above the passage surface
+must also remain below this available clearance. Thus the discrete
+height assignment supplies the combinatorial structure, while the
+geometric construction turns it into an explicit three-dimensional
 maze with walkable passages, crossings, supports, openings, and an
 optional highlighted solution.
 
