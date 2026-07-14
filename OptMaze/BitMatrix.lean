@@ -53,7 +53,8 @@ def parse01Line (line : String) : Except String (Array Bool) := do
 def parseBitMatrix (contents : String) : Except String BitMatrix := do
   let mut rows : Array (Array Bool) := #[]
   let mut width? : Option Nat := none
-  for raw in contents.splitOn "\n" do
+  for rawSlice in contents.split '\n' do
+    let raw := rawSlice.copy
     if raw.trimAscii.isEmpty then
       pure ()
     else

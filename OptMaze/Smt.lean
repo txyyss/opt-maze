@@ -294,17 +294,17 @@ def bitMatrixSmt2 (m : BitMatrix) (minNonWhite? : Option Nat := none) (allowCros
 
 /-- Count the number of SMT assertions in a generated SMT-LIB string. -/
 def countSmtAssertions (contents : String) : Nat :=
-  (contents.splitOn "\n").foldl
+  Std.Iter.fold
     (fun acc line =>
-      if (line.trimAscii.toString).startsWith "(assert " then acc + 1 else acc)
-    0
+      if line.trimAscii.startsWith "(assert " then acc + 1 else acc)
+    0 (contents.split '\n')
 
 /-- Count the number of declared SMT variables in a generated SMT-LIB string. -/
 def countSmtVariables (contents : String) : Nat :=
-  (contents.splitOn "\n").foldl
+  Std.Iter.fold
     (fun acc line =>
-      if (line.trimAscii.toString).startsWith "(declare-const " then acc + 1 else acc)
-    0
+      if line.trimAscii.startsWith "(declare-const " then acc + 1 else acc)
+    0 (contents.split '\n')
 
 /-- A single tile assignment decoded from an SMT solver model. -/
 structure TileAssignment where
@@ -319,7 +319,7 @@ inductive SmtResult where
   | unknown (status : String)
 
 private def parseTileName (name : String) : Option (Nat × Nat) := do
-  let parts := name.splitOn "_"
+  let parts := (name.split '_').toList.map (·.copy)
   match parts with
   | ["tile", r, c] =>
       let r? := r.toNat?
@@ -336,7 +336,7 @@ private def dropParensRight (s : String) : String :=
 
 /-- ASCII trim that returns a String (not a slice). -/
 private def trimAsciiStr (s : String) : String :=
-  s.trimAscii.toString
+  s.trimAscii.copy
 
 /-- Parse a single line of Z3 model output. Supports the usual
     `(define-fun tile_r_c () Int v)` shape. Non-matching lines return `none`. -/
@@ -345,7 +345,7 @@ private def parseModelLine (line : String) : Option (String × Option String) :=
   if !t.startsWith "(define-fun tile_" then
     none
   else
-    let parts := t.splitOn " "
+    let parts := (t.split ' ').toList.map (·.copy)
     match parts with
     | _ :: name :: _ :: _ :: valParts =>
         if valParts.isEmpty then
@@ -389,7 +389,7 @@ private def parseSmtLines (fuel : Nat) (ls : List String) (acc : Array TileAssig
     `(define-fun …)` blocks where the value appears on the next line, and single-line
     definitions. Non-matching lines are ignored. -/
 def parseSmtResult (contents : String) : Except String SmtResult := do
-  let lines := contents.splitOn "\n"
+  let lines := (contents.split '\n').toList.map (·.copy)
   let nonEmpty := lines.dropWhile (fun ln => (trimAsciiStr ln).isEmpty)
   match nonEmpty with
   | [] => throw "Empty solver output."
