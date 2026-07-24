@@ -1,0 +1,70 @@
+\begingroup
+\newsavebox{\patternfigurebox}
+\newsavebox{\planartilefigurebox}
+\newsavebox{\woventilefigurebox}
+\newcommand{\motivationfigureheight}{0.40\textheight}
+
+\sbox{\patternfigurebox}{%
+  \resizebox{!}{\motivationfigureheight}{%
+    \input{figures/s-pattern-grid.tex}%
+  }%
+}
+\sbox{\planartilefigurebox}{%
+  \resizebox{!}{\motivationfigureheight}{%
+    \input{figures/s-nocross-sol-grid.tex}%
+  }%
+}
+\sbox{\woventilefigurebox}{%
+  \resizebox{!}{\motivationfigureheight}{%
+    \input{figures/s-sol-grid.tex}%
+  }%
+}
+
+\begin{tikzpicture}[
+  graphic/.style={
+    inner sep=0pt,
+    outer sep=0pt
+  },
+  flow/.style={
+    -{Stealth[length=2.5mm,width=1.8mm]},
+    draw=black,
+    line width=1.1pt,
+    shorten <=2pt,
+    shorten >=2pt
+  }
+]
+  \node[graphic] (planar-tiles) {\usebox{\planartilefigurebox}};
+  \node[graphic, below=0.42cm of planar-tiles]
+    (woven-tiles) {\usebox{\woventilefigurebox}};
+
+  \node[graphic, right=0.85cm of planar-tiles]
+    (planar-maze) {%
+      \includegraphics[height=\motivationfigureheight]{figures/s-no-solution.pdf}%
+    };
+  \node[graphic, right=0.85cm of woven-tiles]
+    (woven-maze) {%
+      \includegraphics[height=\motivationfigureheight]{figures/crossed-s-no-solution.pdf}%
+    };
+
+  \node[graphic, right=0.85cm of planar-maze]
+    (planar-solution) {%
+      \includegraphics[height=\motivationfigureheight]{figures/s.pdf}%
+    };
+  \node[graphic, right=0.85cm of woven-maze]
+    (woven-solution) {%
+      \includegraphics[height=\motivationfigureheight]{figures/crossed-s.pdf}%
+    };
+
+  \coordinate (branch-center) at
+    ($(planar-tiles.west)!0.5!(woven-tiles.west)$);
+  \node[graphic, left=1.05cm of branch-center]
+    (pattern) {\usebox{\patternfigurebox}};
+
+  \draw[flow] (pattern.east) to[out=24,in=180] (planar-tiles.west);
+  \draw[flow] (pattern.east) to[out=-24,in=180] (woven-tiles.west);
+  \draw[flow] (planar-tiles.east) -- (planar-maze.west);
+  \draw[flow] (planar-maze.east) -- (planar-solution.west);
+  \draw[flow] (woven-tiles.east) -- (woven-maze.west);
+  \draw[flow] (woven-maze.east) -- (woven-solution.west);
+\end{tikzpicture}
+\endgroup

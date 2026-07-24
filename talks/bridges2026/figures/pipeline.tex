@@ -1,0 +1,65 @@
+\begingroup
+\newsavebox{\pipelinepatternbox}
+\newsavebox{\pipelinegridbox}
+\newsavebox{\pipelinepathbox}
+\newcommand{\pipelineletterheight}{3.10cm}
+\newcommand{\pipelinethumbnailwidth}{3.00cm}
+
+\sbox{\pipelinepatternbox}{%
+  \resizebox{!}{\pipelineletterheight}{%
+    {\fontspec{Helvetica}\fontsize{20pt}{20pt}\selectfont S}%
+  }%
+}
+\sbox{\pipelinegridbox}{%
+  \resizebox{\pipelinethumbnailwidth}{!}{%
+    \input{figures/s-pattern-grid.tex}%
+  }%
+}
+\sbox{\pipelinepathbox}{%
+  \resizebox{\pipelinethumbnailwidth}{!}{%
+    \input{figures/s-nocross-sol-grid.tex}%
+  }%
+}
+
+\begin{tikzpicture}[
+  box/.style={
+    draw=black!60,
+    rounded corners=3pt,
+    fill=tilebg,
+    inner xsep=6pt,
+    inner ysep=6pt,
+    align=center
+  },
+  arr/.style={
+    -{Latex[length=3mm,width=2mm]},
+    line width=1.5pt,
+    draw=black!70
+  },
+  lab/.style={font=\small, fill=white, inner sep=1pt},
+  thumbnail/.style={
+    inner sep=0pt,
+    outer sep=0pt
+  }
+]
+
+  \node[box] (p) {Input Pattern\\(text or image)};
+  \node[box, right=16mm of p] (g) {Grid Positions\\(rasterized)};
+  \node[box, right=16mm of g] (s) {Solution Path\\(planar or layered)};
+  \node[box, right=16mm of s] (m) {Maze\\Construction};
+
+  \node[thumbnail, above=5mm of g]
+    (grid-thumbnail) {\usebox{\pipelinegridbox}};
+  \node[thumbnail] at (p |- grid-thumbnail)
+    {\usebox{\pipelinepatternbox}};
+  \node[thumbnail] at (s |- grid-thumbnail)
+    {\usebox{\pipelinepathbox}};
+  \node[thumbnail] at (m |- grid-thumbnail) {%
+    \includegraphics[width=\pipelinethumbnailwidth]{figures/s-no-solution.pdf}%
+  };
+
+  \draw[arr] (p) -- node[lab, above] {Step 1} (g);
+  \draw[arr] (g) -- node[lab, above] {Step 2} (s);
+  \draw[arr] (s) -- node[lab, above] {Step 3} (m);
+
+\end{tikzpicture}
+\endgroup

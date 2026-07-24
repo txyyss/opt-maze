@@ -15,7 +15,13 @@
 *.fdb_latexmk
 *.fls
 *.log
+*.nav
+*.snm
+*.toc
+*.vrb
+*.xdv
 /paper/maze.pdf
 /extended-report/maze-extended.pdf
 /paper/outline.txt
 *.nb
+/talks/bridges2026/tmp/

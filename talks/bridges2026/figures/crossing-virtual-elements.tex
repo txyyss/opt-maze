@@ -1,0 +1,26 @@
+\begin{tikzpicture}[
+  tile/.style={draw=gray!60,fill=tilebg,line width=0.5pt},
+  pathseg/.style={draw=black,line width=6pt,line cap=butt},
+  split/.style={-{Latex[length=3mm,width=2mm]},draw=black,line width=1.1pt},
+  label/.style={font=\small}
+]
+  \path[use as bounding box] (-0.05,-0.20) rectangle (3.70,4.58);
+
+  % One crossing tile.
+  \draw[tile] (1.025,2.70) rectangle (2.625,4.30);
+  \draw[pathseg] (1.825,2.70) -- (1.825,4.30);
+  \draw[pathseg] (1.025,3.50) -- (2.625,3.50);
+  \node[label] at (1.825,4.50) {\(t_{r,c}=7\)};
+
+  % Split the crossing into two co-located virtual path elements.
+  \draw[split] (1.55,2.52) -- (0.80,2.00);
+  \draw[split] (2.10,2.52) -- (2.85,2.00);
+
+  \draw[tile] (0,0.30) rectangle (1.60,1.90);
+  \draw[pathseg] (0,1.10) -- (1.60,1.10);
+  \node[label] at (0.80,0.05) {\(\kind{h}\)};
+
+  \draw[tile] (2.05,0.30) rectangle (3.65,1.90);
+  \draw[pathseg] (2.85,0.30) -- (2.85,1.90);
+  \node[label] at (2.85,0.05) {\(\kind{v}\)};
+\end{tikzpicture}

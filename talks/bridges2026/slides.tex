@@ -1,0 +1,559 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usefonttheme{professionalfonts}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\defaultfontfeatures{Ligatures=TeX}
+\setmainfont{Libertinus Serif}
+\setsansfont{Libertinus Sans}
+\setmonofont{Libertinus Mono}
+\setmathfont{Libertinus Math}
+\newfontfamily\codefont{Iosevka Curly}
+\renewcommand{\familydefault}{\rmdefault}
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing}
+\usepackage{listings}
+\usepackage{array}
+
+\definecolor{tilebg}{rgb}{0.87,0.94,1}
+\definecolor{ink}{HTML}{1F2328}
+\definecolor{muted}{HTML}{59636E}
+\definecolor{accent}{HTML}{0B7285}
+\definecolor{paperbg}{HTML}{FBFAF7}
+\definecolor{softblue}{HTML}{E8F4F6}
+
+\setbeamercolor{background canvas}{bg=paperbg}
+\setbeamercolor{normal text}{fg=ink,bg=paperbg}
+\setbeamercolor{frametitle}{fg=ink,bg=paperbg}
+\setbeamercolor{title}{fg=ink}
+\setbeamercolor{subtitle}{fg=muted}
+\setbeamercolor{structure}{fg=accent}
+\setbeamercolor{itemize item}{fg=accent}
+\setbeamercolor{itemize subitem}{fg=accent}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=.75\paperwidth,ht=2.5ex,dp=1.1ex,leftskip=1.2em]{author in head/foot}%
+      \scriptsize\color{muted}From Patterns to Maze Solutions
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.5ex,dp=1.1ex,rightskip=1.2em plus1fil]{date in head/foot}%
+      \hfill\scriptsize\color{muted}Bridges 2026 \quad \insertframenumber/\inserttotalframenumber
+    \end{beamercolorbox}%
+  }%
+}
+
+\setbeamerfont{title}{family=\sffamily,series=\bfseries,size=\LARGE}
+\setbeamerfont{subtitle}{family=\rmfamily,size=\large}
+\setbeamerfont{author}{family=\rmfamily,size=\normalsize}
+\setbeamerfont{institute}{family=\rmfamily,size=\small}
+\setbeamerfont{date}{family=\rmfamily,size=\small}
+\setbeamerfont{frametitle}{family=\sffamily,series=\bfseries,size=\Large}
+\setbeamerfont{framesubtitle}{family=\rmfamily,series=\mdseries,size=\large}
+\setbeamerfont{normal text}{family=\rmfamily,size=\normalsize}
+\setbeamerfont{footline}{family=\sffamily}
+\setbeamercolor{framesubtitle}{fg=ink,bg=paperbg}
+
+\lstdefinelanguage{SMTLIB}{
+  morekeywords={assert,define-fun,and,or,not,ite,Bool,Int},
+  sensitive=true
+}
+\lstset{
+  language=SMTLIB,
+  basicstyle=\codefont\footnotesize,
+  keywordstyle=\color{accent},
+  commentstyle=\color{muted},
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  showstringspaces=false,
+  frame=single,
+  rulecolor=\color{muted!45},
+  backgroundcolor=\color{white},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  framesep=0.45em
+}
+
+\newcommand{\kind}[1]{\mathsf{#1}}
+\newcommand{\QFLIA}{\texttt{QF\char`_ LIA}}
+\newcommand{\slideaccent}[1]{\textcolor{accent}{\sffamily\bfseries #1}}
+\newcommand{\lead}[1]{{\sffamily\bfseries #1\par}}
+\newcommand{\smallsource}[1]{%
+  {\vspace{0.2em}\scriptsize\color{muted}#1\par}%
+}
+\newcommand{\callout}[2]{%
+  \begin{beamercolorbox}[wd=#1,sep=0.7em,rounded=true]{calloutbox}#2\end{beamercolorbox}%
+}
+\setbeamercolor{calloutbox}{bg=softblue,fg=ink}
+
+\title{From Patterns to Maze Solutions}
+\subtitle{An SMT-Based Construction}
+\author{Shengyi Wang}
+\institute{Shanghai Qi Zhi Institute}
+\date{Bridges 2026}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.4\textwidth}
+      \vspace*{1.6em}
+      {\usebeamerfont{title}\inserttitle\par}
+      \vspace{0.75em}
+      {\usebeamerfont{subtitle}\color{muted}\insertsubtitle\par}
+      \vspace{2.2em}
+      {\usebeamerfont{author}\insertauthor\par}
+      \vspace{0.25em}
+      {\usebeamerfont{institute}\color{muted}\insertinstitute\par}
+      \vspace{0.9em}
+      {\usebeamerfont{date}\color{muted}\insertdate\par}
+    \end{column}
+    \begin{column}{0.6\textwidth}
+      \centering
+      \includegraphics[height=\textheight]{figures/crossed-s-npr.pdf}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Visual Motivation}
+  \centering
+  \input{figures/visual-motivation.tex}
+\end{frame}
+
+\begin{frame}{Pipeline Overview}
+  \centering
+  \resizebox{0.95\linewidth}{!}{%
+    \input{figures/pipeline.tex}%
+  }
+  \vspace{1.4em}
+
+  \begin{tikzpicture}[
+    overview callout/.style={
+      rounded corners=3pt,
+      inner sep=0.7em,
+      outer sep=0pt,
+      text width=0.275\textwidth,
+      minimum height=1.65cm,
+      align=left
+    }
+  ]
+    \node[overview callout,fill=softblue] (grid-callout) {%
+      \slideaccent{1. Grid positions}\\
+      Rasterize text or shape into a finite set \(P\subset\mathbb{N}^2\).
+    };
+    \node[overview callout,fill=softblue,right=0.01\textwidth of grid-callout]
+      (path-callout) {%
+        \slideaccent{2. Solution path}\\
+        Use SMT to synthesize a planar or layered route.
+      };
+    \node[overview callout,fill=softblue,right=0.01\textwidth of path-callout] {%
+      \slideaccent{3. Maze construction}\\
+      Complete the route into a perfect maze.
+    };
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{The Path-Synthesis Problem}
+  \begin{columns}[T,totalwidth=\textwidth]
+      \begin{column}{0.47\textwidth}
+      \setlength{\parindent}{0pt}
+      Rasterization gives a finite target region and two prescribed endpoints.\par
+      \vspace{0.7em}
+      \[
+        P\subset\mathbb{N}^{2},
+        \qquad
+        s,t\in P
+      \]
+      \[
+        s=a_0,a_1,\ldots,a_n=t,
+        \qquad a_i\in P,
+      \]
+      \[
+        \lVert a_{i+1}-a_i\rVert_1=1.
+      \]
+      \par
+      \vspace{0.7em}
+      \noindent Among all valid paths, maximize \(n\); in the planar case, full coverage gives \(n+1=|P|\).
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \callout{\linewidth}{\slideaccent{Planar}\\Each grid position is visited at most once.}
+      \vspace{0.5em}
+      \callout{\linewidth}{\slideaccent{Woven}\\A crossing permits horizontal and vertical visits at one position.}
+      \vspace{0.5em}
+      \callout{\linewidth}{\slideaccent{Coverage}\\Occupy as many target positions as the path constraints allow.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Tile-Based Path Representation}
+  \centering
+  \resizebox{0.9\linewidth}{!}{%
+    \input{figures/tiles.tex}%
+  }
+  \vspace{1em}
+
+  \begin{columns}[T,totalwidth=0.96\textwidth]
+    \begin{column}{0.45\textwidth}
+      \begin{itemize}
+        \item For each \((r,c)\in P\), introduce a tile variable
+          \(t_{r,c}\in\{1,\ldots,8\}\).
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      \begin{itemize}
+        \item Planar paths are the special case where crossing tiles are forbidden.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.25em}
+  \[
+    \begin{aligned}
+      \mathrm{inRange}(t)&=1\le t\le 8,
+      &
+      \mathrm{nonWhite}(t)&=\mathbf{1}_{t\ne 8},
+      \\
+      \mathrm{hasUp}(t)&=t\in\{1,4,5,7\},
+      &
+      \mathrm{hasDown}(t)&=t\in\{2,3,5,7\},
+      \\
+      \mathrm{hasRight}(t)&=t\in\{1,2,6,7\},
+      &
+      \mathrm{hasLeft}(t)&=t\in\{3,4,6,7\}.
+    \end{aligned}
+  \]
+  \vspace{0.05em}
+  \[
+    C=\sum_{(r,c)\in P}\mathrm{nonWhite}(t_{r,c}),
+    \qquad
+    C\ge K \quad\text{or maximize } C.
+  \]
+\end{frame}
+
+\begin{frame}{Local Rules Build a Legal Grid Path}
+  \framesubtitle{Horizontal neighbors must agree on their shared edge}
+  \centering
+  \input{figures/local-horizontal-compatibility.tex}
+\end{frame}
+
+\begin{frame}{Local Rules Build a Legal Grid Path}
+  \framesubtitle{Vertical neighbors must agree on their shared edge}
+  \centering
+  \input{figures/local-vertical-compatibility.tex}
+\end{frame}
+
+\begin{frame}{Local Rules Build a Legal Grid Path}
+  \framesubtitle{Boundary constraints}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \input{figures/local-horizontal-boundaries.tex}
+    \end{column}
+    \begin{column}{0.64\textwidth}
+      \begin{itemize}
+        \item For each non-endpoint position
+          \((r,c)\in P\setminus\{s,t\}\), a missing neighbor disables
+          the corresponding exit:
+          \[
+            \begin{aligned}
+              (r,c-1)\notin P
+              &\ \Longrightarrow
+              \ \neg\,\mathrm{hasLeft}(t_{r,c}),
+              \\[0.25em]
+              (r,c+1)\notin P
+              &\ \Longrightarrow
+              \ \neg\,\mathrm{hasRight}(t_{r,c}),
+              \\[0.25em]
+              (r-1,c)\notin P
+              &\ \Longrightarrow
+              \ \neg\,\mathrm{hasUp}(t_{r,c}),
+              \\[0.25em]
+              (r+1,c)\notin P
+              &\ \Longrightarrow
+              \ \neg\,\mathrm{hasDown}(t_{r,c}).
+            \end{aligned}
+          \]
+        \item The prescribed endpoints \(s\) and \(t\) are the only
+          exceptions to these boundary constraints.
+        \item At each exception, the boundary side fixes a straight tile:
+          horizontal for left/right, and vertical for top/bottom.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Local Constraints Are Not Enough}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.50\textwidth}
+      \centering
+      \includegraphics[width=0.84\linewidth]{figures/abnormal1.pdf}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \lead{Local compatibility does not imply global connectivity.}
+      \vspace{0.9em}
+      \begin{itemize}
+        \item The endpoint-to-endpoint route satisfies every adjacency
+          and boundary rule.
+        \item So does the detached loop: no local constraint detects
+          that it is disconnected.
+      \end{itemize}
+      \vspace{0.8em}
+      \lead{We need a global connectivity certificate.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Global Connectivity: Parent and Rank}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.29\textwidth}
+      \centering
+      \resizebox{!}{4.95cm}{%
+        \input{figures/parent-rank-chain.tex}%
+      }
+
+      \[
+        \rho_v >
+        \rho_{\operatorname{parent}(v)} >
+        \cdots >
+        \rho_s=0
+      \]
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      For each occupied position \((r,c)\), introduce
+      \[
+        \rho_{r,c}\in\mathbb Z,
+        \qquad
+        p^d_{r,c}\in\mathsf{Bool},
+        \quad
+        d\in\{\kind{R},\kind{L},\kind{U},\kind{D}\}.
+      \]
+      Here \(\rho_{r,c}\) is its rank; \(p^d_{r,c}\) records whether
+      direction \(d\) is selected as a predecessor.
+
+      \begin{itemize}
+        \item Root \(s\): \(\rho_s=0\), and no predecessor is selected.
+        \item Every other occupied position chooses at least one
+          predecessor and has rank in \(\{1,\ldots,|P|\}\):
+          \[
+            \mathrm{nonWhite}(t_{r,c})=1\wedge(r,c)\ne s
+            \Longrightarrow
+            \left(\bigvee_d p^d_{r,c}\right)
+            \wedge 1\le\rho_{r,c}\le |P|.
+          \]
+      \end{itemize}
+
+      A predecessor must follow an existing local path edge and have
+      smaller rank. For example,
+      \[
+        p^{\kind{R}}_{r,c}\Longrightarrow
+        \mathrm{hasRight}(t_{r,c})
+        \wedge\mathrm{hasLeft}(t_{r,c+1})
+        \wedge\rho_{r,c+1}<\rho_{r,c}.
+      \]
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{One Rank per Grid Position Is Still Not Enough}
+  \centering
+  \begin{tikzpicture}[
+    panel/.style={inner sep=0pt},
+    flowarrow/.style={-{Latex[length=2.6mm]},draw=black,line width=1pt},
+    label/.style={font=\scriptsize\sffamily,align=center}
+  ]
+    \node[panel] (solution)
+      {\includegraphics[width=3.35cm]{figures/abnormal2.pdf}};
+    \node[panel,right=1.15cm of solution] (ranks)
+      {\includegraphics[width=3.35cm]{figures/abnormal3.pdf}};
+    \node[panel,right=1.15cm of ranks] (stroke)
+      {\includegraphics[width=3.35cm]{figures/abnormal4.pdf}};
+
+    \draw[flowarrow] (solution.east) -- (ranks.west);
+    \draw[flowarrow] (ranks.east) -- (stroke.west);
+
+    \node[label,below=0.2cm of solution] {accepted tile assignment};
+    \node[label,below=0.2cm of ranks] {valid rank assignment};
+    \node[label,below=0.2cm of stroke] {induced Eulerian stroke};
+  \end{tikzpicture}
+
+  \vspace{0.9em}
+  \begin{itemize}
+    \item One rank per grid position merges the horizontal and vertical
+      strands of a crossing into a single graph vertex.
+    \item The model can therefore certify a single-stroke Eulerian traversal,
+      but not the intended woven over--under path.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Crossing Tiles as Virtual Path Elements}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.27\textwidth}
+      \centering
+      \input{figures/crossing-virtual-elements.tex}
+    \end{column}
+    \begin{column}{0.70\textwidth}
+      A tile activates one or two path elements:
+      \[
+        \begin{aligned}
+          A^{\kind{base}}_{r,c}
+          &=\bigl(\mathrm{nonWhite}(t_{r,c})=1\bigr)
+            \wedge(t_{r,c}\ne 7),\\
+          A^{\kind{h}}_{r,c}=A^{\kind{v}}_{r,c}
+          &=(t_{r,c}=7).
+        \end{aligned}
+      \]
+
+      Each \(k\in\{\kind{base},\kind{h},\kind{v}\}\) gets its own
+      parent-rank state:
+      \[
+        \begin{gathered}
+          \rho^k_{r,c}\in\mathbb Z,
+          \qquad
+          p^{d,k}_{r,c}\in\mathsf{Bool},\\
+          A^k_{r,c}\wedge(r,c)\ne s
+          \Longrightarrow
+          \left(\bigvee_d p^{d,k}_{r,c}\right)
+          \wedge 1\le\rho^k_{r,c}\le |P|.
+        \end{gathered}
+      \]
+
+      \begin{itemize}
+        \item The \(\kind{h}\) and \(\kind{v}\) elements permit only
+          horizontal and vertical parent directions, respectively.
+        \item Coverage remains based on \(\mathrm{nonWhite}(t_{r,c})\),
+          so a crossing is counted once.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{SMT-LIB Realism}
+  \framesubtitle{A directional parent constraint and its concrete encoding}
+  \[
+    p^{\kind{R},\kind{h}}_{r,c}\;\Rightarrow\;\bigl(A^{\kind{h}}_{r,c}\wedge \mathrm{hasRight}(t_{r,c})\bigr)\wedge\mathrm{hasLeft}(t_{r,c+1})\wedge\Bigl(A^{\kind{base}}_{r,c+1}\wedge \rho^{\kind{base}}_{r,c+1}<\rho^{\kind{h}}_{r,c}\;\vee\;A^{\kind{h}}_{r,c+1}\wedge \rho^{\kind{h}}_{r,c+1}<\rho^{\kind{h}}_{r,c}\Bigr).
+  \]
+
+  In the SMT encoding, this implication expands into a disjunction over
+  the possible kinds of the neighboring tile; for instance, with
+  \((r,c)=(31,13)\):
+\begin{center}
+\begin{minipage}{0.75\textwidth}
+\begin{lstlisting}
+(assert (=> pR_31_13_h
+  (or (and (= tile_31_14 7)
+           (= tile_31_13 7) (hasRight tile_31_13) (hasLeft tile_31_14)
+           (< rank_31_14_h rank_31_13_h))
+      (and (and (not (= tile_31_14 7)) (= (nonWhite tile_31_14) 1))
+           (= tile_31_13 7) (hasRight tile_31_13) (hasLeft tile_31_14)
+           (< rank_31_14_base rank_31_13_h)))))
+\end{lstlisting}
+\end{minipage}
+\end{center}
+  \begin{itemize}
+    \item The constraints are emitted as SMT-LIB, not pseudocode.
+    \item This is the horizontal parent implication for a crossing virtual element.
+    \item The neighbor can be another crossing \(\kind{h}\) element or an ordinary \(\kind{base}\) element.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Maze Completion from a Prescribed Solution Path}
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.43\textwidth}
+      \centering
+      \includegraphics[height=0.75\paperheight,keepaspectratio]{figures/crossed-s.pdf}
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \begin{itemize}
+        \item Read the SMT model: each value \(t_{r,c}\) selects a tile, and the tile assignment draws the prescribed solution path.
+        \item Planar: insert the solution-path edges first, then attach each remaining grid position by a Wilson-style loop-erased random walk that stops at the existing tree.
+        \item Woven: insert required crossings and solution links first, then use Kruskal-style completion on the expanded over/under graph.
+        \item The completed passage graph is a tree, so the entry--exit solution is unique.
+        \item Render the passage graph using standard walls and passages, with inset corridors used to depict woven crossings.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{A Big Example}
+  \centering
+  \includegraphics[width=\textwidth,height=0.828\paperheight,keepaspectratio]{figures/bigart-inter-sol.pdf}
+\end{frame}
+
+\begin{frame}{After the Core Construction: 3D Realization}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.47\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{figures/crossing-construction-npr.pdf}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item The SMT construction already ends with a valid combinatorial path.
+        \item A separate visualization stage can realize the woven topology with local 3D primitives:
+          \begin{itemize}
+            \item platforms and bridges,
+            \item connectors and stairs,
+            \item support posts, openings, and a solution ribbon.
+          \end{itemize}
+        \item This geometric layer displays the over--under relation; it does not alter the synthesized path or maze graph.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{A 3D View of the Completed Woven Maze}
+  \centering
+  \includegraphics[width=\textwidth,height=0.828\paperheight,keepaspectratio]{figures/crossed-inf-npr.pdf}
+\end{frame}
+
+\begin{frame}{Takeaways}
+  \centering
+  \begin{tikzpicture}[
+    takeaway callout/.style={
+      rounded corners=3pt,
+      inner sep=0.7em,
+      outer sep=0pt,
+      text width=0.275\textwidth,
+      minimum height=1.65cm,
+      align=left
+    }
+  ]
+    \node[takeaway callout,fill=softblue] (model-callout) {%
+      \slideaccent{Model the pattern}\\
+      Target pixels, endpoints, and coverage define the path-synthesis problem.
+    };
+    \node[takeaway callout,fill=softblue,right=0.01\textwidth of model-callout]
+      (path-callout) {%
+        \slideaccent{Guarantee one path}\\
+        Local tile rules combine with parent--rank connectivity.
+      };
+    \node[takeaway callout,fill=softblue,right=0.01\textwidth of path-callout] {%
+      \slideaccent{Support two topologies}\\
+      Virtual crossing elements specialize one encoding to planar or woven paths.
+    };
+  \end{tikzpicture}
+  \vspace{1.3em}
+  \begin{columns}[c,totalwidth=\textwidth]
+    \begin{column}{0.04\textwidth}
+    \end{column}
+    \begin{column}{0.7\textwidth}
+      SMT synthesizes the prescribed solution path; standard spanning-tree methods then complete it into a perfect maze.
+      \vspace{0.5em}
+
+      The extended report provides fuller SMT-LIB examples and details of maze completion and optional 3D realization.
+    \end{column}
+    \begin{column}{0.22\textwidth}
+      \centering
+      \includegraphics[width=2.25cm]{figures/arxiv-2607.09781.pdf}
+      \vspace{0.15em}
+
+      {\sffamily\bfseries\small Extended Report\par}
+      {\scriptsize\color{muted}arXiv:2607.09781\par}
+    \end{column}
+    \begin{column}{0.04\textwidth}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\end{document}

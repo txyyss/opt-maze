@@ -1,0 +1,84 @@
+\begin{tikzpicture}[
+  tile/.style={
+    draw=gray!60,
+    fill=tilebg,
+    line width=0.5pt
+  },
+  pathseg/.style={
+    draw=black,
+    line width=5.5pt,
+    line cap=butt
+  },
+  tilenum/.style={
+    font=\normalsize
+  },
+  boundary/.style={
+    draw=muted,
+    dashed,
+    line width=1.1pt
+  },
+  blocked/.style={
+    draw=red,
+    line width=2.2pt
+  }
+]
+
+\def\half{0.625}
+
+\newcommand{\leftboundarytile}[3]{%
+  \begin{scope}[shift={(-1.35,#1)}]
+    \draw[tile] (-\half,-\half) rectangle (\half,\half);
+    #3
+    \node[tilenum,anchor=west] at (0.88,0) {#2};
+  \end{scope}
+}
+
+\newcommand{\rightboundarytile}[3]{%
+  \begin{scope}[shift={(1.35,#1)}]
+    \draw[tile] (-\half,-\half) rectangle (\half,\half);
+    #3
+    \node[tilenum,anchor=east] at (-0.88,0) {#2};
+  \end{scope}
+}
+
+% Tiles with hasLeft = true: 3, 4, 6, 7.
+\leftboundarytile{2.175}{3}{%
+  \draw[pathseg] (-\half,0) -- (0,0) -- (0,-\half);
+}
+\leftboundarytile{0.725}{4}{%
+  \draw[pathseg] (-\half,0) -- (0,0) -- (0,\half);
+}
+\leftboundarytile{-0.725}{6}{%
+  \draw[pathseg] (-\half,0) -- (\half,0);
+}
+\leftboundarytile{-2.175}{7}{%
+  \draw[pathseg] (-\half,0) -- (\half,0);
+  \draw[pathseg] (0,-\half) -- (0,\half);
+}
+
+% Tiles with hasRight = true: 1, 2, 6, 7.
+\rightboundarytile{2.175}{1}{%
+  \draw[pathseg] (0,\half) -- (0,0) -- (\half,0);
+}
+\rightboundarytile{0.725}{2}{%
+  \draw[pathseg] (0,-\half) -- (0,0) -- (\half,0);
+}
+\rightboundarytile{-0.725}{6}{%
+  \draw[pathseg] (-\half,0) -- (\half,0);
+}
+\rightboundarytile{-2.175}{7}{%
+  \draw[pathseg] (-\half,0) -- (\half,0);
+  \draw[pathseg] (0,-\half) -- (0,\half);
+}
+
+\draw[boundary] (-1.975,2.90) -- (-1.975,-2.90);
+\draw[boundary] (1.975,2.90) -- (1.975,-2.90);
+
+\foreach \y in {2.175,0.725,-0.725,-2.175} {
+  \draw[blocked] (-2.14,\y+0.16) -- (-1.81,\y-0.16);
+  \draw[blocked] (-2.14,\y-0.16) -- (-1.81,\y+0.16);
+  \draw[blocked] (1.81,\y+0.16) -- (2.14,\y-0.16);
+  \draw[blocked] (1.81,\y-0.16) -- (2.14,\y+0.16);
+}
+
+\end{tikzpicture}
