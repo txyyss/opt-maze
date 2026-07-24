@@ -19,7 +19,6 @@
 
 \definecolor{tilebg}{rgb}{0.87,0.94,1}
 \definecolor{ink}{HTML}{1F2328}
-\definecolor{muted}{HTML}{59636E}
 \definecolor{accent}{HTML}{0B7285}
 \definecolor{paperbg}{HTML}{FBFAF7}
 \definecolor{softblue}{HTML}{E8F4F6}
@@ -28,7 +27,7 @@
 \setbeamercolor{normal text}{fg=ink,bg=paperbg}
 \setbeamercolor{frametitle}{fg=ink,bg=paperbg}
 \setbeamercolor{title}{fg=ink}
-\setbeamercolor{subtitle}{fg=muted}
+\setbeamercolor{subtitle}{fg=ink}
 \setbeamercolor{structure}{fg=accent}
 \setbeamercolor{itemize item}{fg=accent}
 \setbeamercolor{itemize subitem}{fg=accent}
@@ -37,10 +36,10 @@
   \leavevmode%
   \hbox{%
     \begin{beamercolorbox}[wd=.75\paperwidth,ht=2.5ex,dp=1.1ex,leftskip=1.2em]{author in head/foot}%
-      \scriptsize\color{muted}From Patterns to Maze Solutions
+      \scriptsize From Patterns to Maze Solutions
     \end{beamercolorbox}%
     \begin{beamercolorbox}[wd=.25\paperwidth,ht=2.5ex,dp=1.1ex,rightskip=1.2em plus1fil]{date in head/foot}%
-      \hfill\scriptsize\color{muted}Bridges 2026 \quad \insertframenumber/\inserttotalframenumber
+      \hfill\scriptsize Bridges 2026 \quad \insertframenumber/\inserttotalframenumber
     \end{beamercolorbox}%
   }%
 }
@@ -49,7 +48,7 @@
 \setbeamerfont{subtitle}{family=\rmfamily,size=\large}
 \setbeamerfont{author}{family=\rmfamily,size=\normalsize}
 \setbeamerfont{institute}{family=\rmfamily,size=\small}
-\setbeamerfont{date}{family=\rmfamily,size=\small}
+\setbeamerfont{date}{family=\rmfamily,size=\normalsize}
 \setbeamerfont{frametitle}{family=\sffamily,series=\bfseries,size=\Large}
 \setbeamerfont{framesubtitle}{family=\rmfamily,series=\mdseries,size=\large}
 \setbeamerfont{normal text}{family=\rmfamily,size=\normalsize}
@@ -64,13 +63,13 @@
   language=SMTLIB,
   basicstyle=\codefont\footnotesize,
   keywordstyle=\color{accent},
-  commentstyle=\color{muted},
+  commentstyle=\color{ink},
   columns=fullflexible,
   keepspaces=true,
   breaklines=true,
   showstringspaces=false,
   frame=single,
-  rulecolor=\color{muted!45},
+  rulecolor=\color{ink!45},
   backgroundcolor=\color{white},
   xleftmargin=0.5em,
   xrightmargin=0.5em,
@@ -82,7 +81,7 @@
 \newcommand{\slideaccent}[1]{\textcolor{accent}{\sffamily\bfseries #1}}
 \newcommand{\lead}[1]{{\sffamily\bfseries #1\par}}
 \newcommand{\smallsource}[1]{%
-  {\vspace{0.2em}\scriptsize\color{muted}#1\par}%
+  {\vspace{0.2em}\scriptsize #1\par}%
 }
 \newcommand{\callout}[2]{%
   \begin{beamercolorbox}[wd=#1,sep=0.7em,rounded=true]{calloutbox}#2\end{beamercolorbox}%
@@ -103,13 +102,13 @@
       \vspace*{1.6em}
       {\usebeamerfont{title}\inserttitle\par}
       \vspace{0.75em}
-      {\usebeamerfont{subtitle}\color{muted}\insertsubtitle\par}
+      {\usebeamerfont{subtitle}\insertsubtitle\par}
       \vspace{2.2em}
       {\usebeamerfont{author}\insertauthor\par}
       \vspace{0.25em}
-      {\usebeamerfont{institute}\color{muted}\insertinstitute\par}
+      {\usebeamerfont{institute}\insertinstitute\par}
       \vspace{0.9em}
-      {\usebeamerfont{date}\color{muted}\insertdate\par}
+      {\usebeamerfont{date}\insertdate\par}
     \end{column}
     \begin{column}{0.6\textwidth}
       \centering
@@ -291,7 +290,7 @@
       \includegraphics[width=0.84\linewidth]{figures/abnormal1.pdf}
     \end{column}
     \begin{column}{0.47\textwidth}
-      \lead{Local compatibility does not imply global connectivity.}
+      Local compatibility does not imply global connectivity.
       \vspace{0.9em}
       \begin{itemize}
         \item The endpoint-to-endpoint route satisfies every adjacency
@@ -300,7 +299,7 @@
           that it is disconnected.
       \end{itemize}
       \vspace{0.8em}
-      \lead{We need a global connectivity certificate.}
+      We need a global connectivity certificate.
     \end{column}
   \end{columns}
 \end{frame}
@@ -549,7 +548,7 @@
       \vspace{0.15em}
 
       {\sffamily\bfseries\small Extended Report\par}
-      {\scriptsize\color{muted}arXiv:2607.09781\par}
+      {\scriptsize arXiv:2607.09781\par}
     \end{column}
     \begin{column}{0.04\textwidth}
     \end{column}
